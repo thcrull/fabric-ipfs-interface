@@ -1,4 +1,4 @@
-module github.com/thcrull/fabric-interface
+module github.com/thcrull/fabric-interface/application
 
 go 1.24.0
 

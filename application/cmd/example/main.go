@@ -8,8 +8,9 @@ import (
 	"github.com/thcrull/fabric-interface/application/pkg/config"
 )
 
+// This example demonstrates how to use the Fabric Interface to submit and query transactions.
 func main() {
-	cfg, err := config.LoadConfig("config.yaml")
+	cfg, err := config.LoadConfig("../config.yaml")
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
@@ -24,15 +25,21 @@ func main() {
 		}
 	}()
 
-	submitResult, err := client.SubmitTransaction("CreateAsset", "asset2", "green", "500", "Tombus", "3000")
+	submitResult, err := client.SubmitTransaction("AddMetadata", "1", "tom", "encapkey1", "encmodelhash1", "homhash1")
 	if err != nil {
 		log.Fatalf("Failed to submit transaction: %v", err)
 	}
 	fmt.Println("Submit result:", string(submitResult))
 
-	queryResult, err := client.EvaluateTransaction("GetAllAssets")
+	queryResult, err := client.EvaluateTransaction("GetAllMetadata")
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %v", err)
 	}
 	fmt.Println("Query result:", string(queryResult))
+
+	qR, err := client.EvaluateTransaction("ReadMetadata", "1", "tom")
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %v", err)
+	}
+	fmt.Println("Query result:", string(qR))
 }
