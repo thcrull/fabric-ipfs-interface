@@ -74,6 +74,56 @@ func (s *MetadataSmartContract) MetadataExists(ctx contractapi.TransactionContex
 	return metadataJSON != nil, nil
 }
 
+// DeleteMetadata deletes a given metadata block from the world state.
+func (s *MetadataSmartContract) DeleteMetadata(ctx contractapi.TransactionContextInterface, epoch int, participantId string) error {
+	exists, err := s.MetadataExists(ctx, epoch, participantId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("the metadata block for epoch %d from participant %s does not exist", epoch, participantId)
+	}
+
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
+
+	return ctx.GetStub().DelState(compositeKey)
+}
+
+// UpdateMetadata updates an existing metadata block in the world state with provided parameters.
+func (s *MetadataSmartContract) UpdateMetadata(
+	ctx contractapi.TransactionContextInterface,
+	epoch int,
+	participantId string,
+	encapsulatedKey string,
+	encModelHash string,
+	homomorphicHash string,
+) error {
+	exists, err := s.MetadataExists(ctx, epoch, participantId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("the metadata block for epoch %d from participant %s does not exist", epoch, participantId)
+	}
+
+	// overwriting original metadata with new metadata
+	metadata := Metadata{
+		Epoch:           epoch,
+		ParticipantID:   participantId,
+		EncapsulatedKey: encapsulatedKey,
+		EncModelHash:    encModelHash,
+		HomomorphicHash: homomorphicHash,
+	}
+	metadataJSON, err := json.Marshal(metadata)
+	if err != nil {
+		return err
+	}
+
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
+
+	return ctx.GetStub().PutState(compositeKey, metadataJSON)
+}
+
 // GetAllMetadata returns all metadata blocks found in the world state
 func (s *MetadataSmartContract) GetAllMetadata(ctx contractapi.TransactionContextInterface) ([]*Metadata, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByPartialCompositeKey("metadata", []string{})
