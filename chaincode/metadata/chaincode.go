@@ -1,4 +1,4 @@
-package chaincode
+package metadata
 
 import (
 	"encoding/json"
