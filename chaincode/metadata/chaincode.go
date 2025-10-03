@@ -4,8 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/thcrull/fabric-ipfs-interface/shared"
+
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
 )
+
+// MetadataSmartContract provides functions for managing metadata
+type MetadataSmartContract struct {
+	contractapi.Contract
+}
 
 // AddMetadata issues a new metadata block to the world state with given details.
 func (s *MetadataSmartContract) AddMetadata(
@@ -26,7 +33,7 @@ func (s *MetadataSmartContract) AddMetadata(
 		return fmt.Errorf("the metadata block for epoch %d from participant %s already exists", epoch, participantId)
 	}
 
-	metadata := Metadata{
+	metadata := shared.Metadata{
 		Epoch:           epoch,
 		ParticipantID:   participantId,
 		EncapsulatedKey: encapsulatedKey,
@@ -42,7 +49,7 @@ func (s *MetadataSmartContract) AddMetadata(
 }
 
 // ReadMetadata returns the metadata block stored in the world state with the given epoch and participant id.
-func (s *MetadataSmartContract) ReadMetadata(ctx contractapi.TransactionContextInterface, epoch int, participantId string) (*Metadata, error) {
+func (s *MetadataSmartContract) ReadMetadata(ctx contractapi.TransactionContextInterface, epoch int, participantId string) (*shared.Metadata, error) {
 	compositeKey, err := ctx.GetStub().CreateCompositeKey("metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
 
 	metadataJSON, err := ctx.GetStub().GetState(compositeKey)
@@ -53,7 +60,7 @@ func (s *MetadataSmartContract) ReadMetadata(ctx contractapi.TransactionContextI
 		return nil, fmt.Errorf("the metadata block for epoch %d from participant %s does not exist", epoch, participantId)
 	}
 
-	var metadata Metadata
+	var metadata shared.Metadata
 	err = json.Unmarshal(metadataJSON, &metadata)
 	if err != nil {
 		return nil, err
@@ -107,7 +114,7 @@ func (s *MetadataSmartContract) UpdateMetadata(
 	}
 
 	// overwriting original metadata with new metadata
-	metadata := Metadata{
+	metadata := shared.Metadata{
 		Epoch:           epoch,
 		ParticipantID:   participantId,
 		EncapsulatedKey: encapsulatedKey,
@@ -125,21 +132,21 @@ func (s *MetadataSmartContract) UpdateMetadata(
 }
 
 // GetAllMetadata returns all metadata blocks found in the world state
-func (s *MetadataSmartContract) GetAllMetadata(ctx contractapi.TransactionContextInterface) ([]*Metadata, error) {
+func (s *MetadataSmartContract) GetAllMetadata(ctx contractapi.TransactionContextInterface) ([]*shared.Metadata, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByPartialCompositeKey("metadata", []string{})
 	if err != nil {
 		return nil, err
 	}
 	defer resultsIterator.Close()
 
-	var metadataBlocks []*Metadata
+	var metadataBlocks []*shared.Metadata
 	for resultsIterator.HasNext() {
 		queryResponse, err := resultsIterator.Next()
 		if err != nil {
 			return nil, err
 		}
 
-		var metadata Metadata
+		var metadata shared.Metadata
 		if err := json.Unmarshal(queryResponse.Value, &metadata); err != nil {
 			return nil, err
 		}

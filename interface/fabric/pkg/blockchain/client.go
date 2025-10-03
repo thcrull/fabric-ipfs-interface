@@ -1,11 +1,13 @@
-package blockchain
+package metadata
 
 import (
+	"encoding/json"
+
 	"github.com/hyperledger/fabric-gateway/pkg/client"
+	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/internal/bcutils"
 	"google.golang.org/grpc"
 
-	"github.com/thcrull/fabric-interface/application/internal/bcutils"
-	"github.com/thcrull/fabric-interface/application/pkg/config"
+	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/pkg/config"
 )
 
 // Client is a wrapper around a Fabric Gateway connection, providing
@@ -61,17 +63,35 @@ func NewClient(cfg *config.Config) (*Client, error) {
 }
 
 // SubmitTransaction submits a transaction that modifies the ledger state.
-// `name` is the chaincode function name and `args` are its parameters.
+// Name is the chaincode function name, args are its parameters, and out is the output address.
 // Returns the transaction result or an error.
-func (c *Client) SubmitTransaction(name string, args ...string) ([]byte, error) {
-	return c.Contract.SubmitTransaction(name, args...)
+func (c *Client) SubmitTransaction(out interface{}, name string, args ...string) error {
+	res, err := c.Contract.SubmitTransaction(name, args...)
+	if err != nil {
+		return err
+	}
+
+	if res == nil {
+		return nil
+	}
+
+	return json.Unmarshal(res, out)
 }
 
 // EvaluateTransaction evaluates (queries) a transaction without modifying the ledger state.
-// `name` is the chaincode function name and `args` are its parameters.
+// Name is the chaincode function name, args are its parameters, and out is the output address.
 // Returns the query result or an error.
-func (c *Client) EvaluateTransaction(name string, args ...string) ([]byte, error) {
-	return c.Contract.EvaluateTransaction(name, args...)
+func (c *Client) EvaluateTransaction(out interface{}, name string, args ...string) error {
+	res, err := c.Contract.EvaluateTransaction(name, args...)
+	if err != nil {
+		return err
+	}
+
+	if res == nil {
+		return nil
+	}
+
+	return json.Unmarshal(res, out)
 }
 
 // Close cleans up the Client by closing the Gateway and gRPC connection.

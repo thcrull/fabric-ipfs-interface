@@ -1,11 +1,4 @@
-package metadata
-
-import "github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
-
-// MetadataSmartContract provides functions for managing metadata
-type MetadataSmartContract struct {
-	contractapi.Contract
-}
+package shared
 
 // Metadata represents a participant's federated learning model update
 type Metadata struct {
