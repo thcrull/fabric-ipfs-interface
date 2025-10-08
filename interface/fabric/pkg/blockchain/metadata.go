@@ -92,6 +92,16 @@ func (s *MetadataService) UpdateMetadata(
 	return true, nil
 }
 
+// DeleteAllMetadata deletes all metadata records, returns true if successful
+func (s *MetadataService) DeleteAllMetadata() (bool, error) {
+	err := s.client.SubmitTransaction(nil, "DeleteAllMetadata")
+	if err != nil {
+		return false, fmt.Errorf("failed to delete metadata record: %w", err)
+	}
+
+	return true, nil
+}
+
 // GetAllMetadata queries all metadata entries from the ledger
 func (s *MetadataService) GetAllMetadata() ([]shared.Metadata, error) {
 	var metadataList []shared.Metadata
@@ -100,5 +110,30 @@ func (s *MetadataService) GetAllMetadata() ([]shared.Metadata, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to query all metadata records: %w", err)
 	}
+	return metadataList, nil
+}
+
+// GetAllMetadataByParticipant queries all metadata entries from the ledger made by the participant
+func (s *MetadataService) GetAllMetadataByParticipant(participantID string) ([]shared.Metadata, error) {
+	var metadataList []shared.Metadata
+
+	err := s.client.EvaluateTransaction(&metadataList, "GetAllMetadataByParticipant", participantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query the metadata records: %w", err)
+	}
+
+	return metadataList, nil
+}
+
+// GetAllMetadataByEpoch queries all metadata entries from the ledger from the epoch
+func (s *MetadataService) GetAllMetadataByEpoch(epoch int) ([]shared.Metadata, error) {
+	epochStr := strconv.Itoa(epoch)
+	var metadataList []shared.Metadata
+
+	err := s.client.EvaluateTransaction(&metadataList, "GetAllMetadataByEpoch", epochStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query the metadata records: %w", err)
+	}
+
 	return metadataList, nil
 }

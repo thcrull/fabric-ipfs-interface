@@ -38,6 +38,18 @@ func main() {
 	}
 	fmt.Printf("Added metadata: %+v\n", newMetadata)
 
+	newMetadata1, err := service.AddMetadata(10, "tom", "encapkey1", "encmodelhash1", "homhash1")
+	if err != nil {
+		log.Fatalf("Failed to add metadata: %v", err)
+	}
+	fmt.Printf("Added metadata: %+v\n", newMetadata1)
+
+	newMetadata2, err := service.AddMetadata(15, "tom1", "encapkey1", "encmodelhash1", "homhash1")
+	if err != nil {
+		log.Fatalf("Failed to add metadata: %v", err)
+	}
+	fmt.Printf("Added metadata: %+v\n", newMetadata2)
+
 	// ----------------------
 	// Get all metadata records
 	// ----------------------
@@ -47,6 +59,30 @@ func main() {
 	}
 	fmt.Printf("All metadata:\n")
 	for _, m := range allMetadata {
+		fmt.Printf("  %+v\n", m)
+	}
+
+	// ----------------------
+	// Get all metadata records by participant
+	// ----------------------
+	allMetadata1, err := service.GetAllMetadataByParticipant("tom")
+	if err != nil {
+		log.Fatalf("Failed to get all metadata from participant %s: %v", "tom", err)
+	}
+	fmt.Printf("All metadata from participant %s:\n", "tom")
+	for _, m := range allMetadata1 {
+		fmt.Printf("  %+v\n", m)
+	}
+
+	// ----------------------
+	// Get all metadata records by epoch
+	// ----------------------
+	allMetadata2, err := service.GetAllMetadataByEpoch(15)
+	if err != nil {
+		log.Fatalf("Failed to get all metadata from epoch %d: %v", 15, err)
+	}
+	fmt.Printf("All metadata from epoch %d:\n", 15)
+	for _, m := range allMetadata2 {
 		fmt.Printf("  %+v\n", m)
 	}
 
@@ -107,12 +143,33 @@ func main() {
 	// ----------------------
 	// Get all metadata records
 	// ----------------------
-	allMetadata2, err := service.GetAllMetadata()
+	allMetadata3, err := service.GetAllMetadata()
 	if err != nil {
 		log.Fatalf("Failed to get all metadata: %v", err)
 	}
 	fmt.Printf("All metadata:\n")
-	for _, m := range allMetadata2 {
+	for _, m := range allMetadata3 {
+		fmt.Printf("  %+v\n", m)
+	}
+
+	// ----------------------
+	// Delete all metadata records
+	// ----------------------
+	deleteAllResponse, err := service.DeleteAllMetadata()
+	if err != nil {
+		log.Fatalf("Failed to delete all metadata: %v", err)
+	}
+	fmt.Printf("Deleted all metadata: %t\n", deleteAllResponse)
+
+	// ----------------------
+	// Get all metadata records
+	// ----------------------
+	allMetadata4, err := service.GetAllMetadata()
+	if err != nil {
+		log.Fatalf("Failed to get all metadata: %v", err)
+	}
+	fmt.Printf("All metadata:\n")
+	for _, m := range allMetadata4 {
 		fmt.Printf("  %+v\n", m)
 	}
 }

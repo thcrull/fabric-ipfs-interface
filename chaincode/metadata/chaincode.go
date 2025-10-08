@@ -131,6 +131,23 @@ func (s *MetadataSmartContract) UpdateMetadata(
 	return ctx.GetStub().PutState(compositeKey, metadataJSON)
 }
 
+// DeleteAllMetadata deletes all metadata blocks from the world state.
+func (s *MetadataSmartContract) DeleteAllMetadata(ctx contractapi.TransactionContextInterface) error {
+	metadataBlocks, err := s.GetAllMetadata(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting all metadata blocks for deletion: %v", err)
+	}
+
+	for _, metadataBlock := range metadataBlocks {
+		err := s.DeleteMetadata(ctx, metadataBlock.Epoch, metadataBlock.ParticipantID)
+		if err != nil {
+			return fmt.Errorf("error deleting metadata block: %v", err)
+		}
+	}
+
+	return nil
+}
+
 // GetAllMetadata returns all metadata blocks found in the world state
 func (s *MetadataSmartContract) GetAllMetadata(ctx contractapi.TransactionContextInterface) ([]*shared.Metadata, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByPartialCompositeKey("metadata", []string{})
@@ -151,6 +168,59 @@ func (s *MetadataSmartContract) GetAllMetadata(ctx contractapi.TransactionContex
 			return nil, err
 		}
 		metadataBlocks = append(metadataBlocks, &metadata)
+	}
+
+	return metadataBlocks, nil
+}
+
+// GetAllMetadataByParticipant returns all metadata blocks found in the world state
+func (s *MetadataSmartContract) GetAllMetadataByParticipant(ctx contractapi.TransactionContextInterface, participantId string) ([]*shared.Metadata, error) {
+	resultsIterator, err := ctx.GetStub().GetStateByPartialCompositeKey("metadata", []string{participantId})
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	var metadataBlocks []*shared.Metadata
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var metadata shared.Metadata
+		if err := json.Unmarshal(queryResponse.Value, &metadata); err != nil {
+			return nil, err
+		}
+		metadataBlocks = append(metadataBlocks, &metadata)
+	}
+
+	return metadataBlocks, nil
+}
+
+// GetAllMetadataByEpoch returns all metadata blocks found in the world state
+func (s *MetadataSmartContract) GetAllMetadataByEpoch(ctx contractapi.TransactionContextInterface, epoch int) ([]*shared.Metadata, error) {
+	resultsIterator, err := ctx.GetStub().GetStateByPartialCompositeKey("metadata", []string{})
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	var metadataBlocks []*shared.Metadata
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var metadata shared.Metadata
+		if err := json.Unmarshal(queryResponse.Value, &metadata); err != nil {
+			return nil, err
+		}
+
+		if metadata.Epoch == epoch {
+			metadataBlocks = append(metadataBlocks, &metadata)
+		}
 	}
 
 	return metadataBlocks, nil

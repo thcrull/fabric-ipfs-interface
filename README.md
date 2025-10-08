@@ -7,3 +7,18 @@ This repository provides:
 - **Chaincode packages**: smart contracts specific to the research use case.
 - An **IPFS interface**: integration helpers to interact with IPFS for decentralized storage.
 
+```bash
+./install-fabric.sh docker samples binary
+```
+
+```bash
+cd fabric-samples/test-network
+./network.sh up createChannel
+./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go -ccl go
+```
+
+```bash
+go mod tidy
+cd interface/fabric/cmd/example
+go run main.go
+```
