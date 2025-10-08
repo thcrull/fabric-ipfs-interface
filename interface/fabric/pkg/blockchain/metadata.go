@@ -21,14 +21,14 @@ func NewMetadataService(client *Client) *MetadataService {
 // AddMetadata submits a transaction to add a new metadata record
 func (s *MetadataService) AddMetadata(
 	epoch int,
-	participantID string,
+	participantId string,
 	encapsulatedKey string,
 	encModelHash string,
 	homomorphicHash string,
 ) (bool, error) {
 	epochStr := strconv.Itoa(epoch)
 
-	err := s.client.SubmitTransaction(nil, "AddMetadata", epochStr, participantID, encapsulatedKey, encModelHash, homomorphicHash)
+	err := s.client.SubmitTransaction(nil, "AddMetadata", epochStr, participantId, encapsulatedKey, encModelHash, homomorphicHash)
 	if err != nil {
 		return false, fmt.Errorf("failed to add metadata record: %w", err)
 	}
@@ -36,12 +36,12 @@ func (s *MetadataService) AddMetadata(
 	return true, nil
 }
 
-// ReadMetadata retrieves a metadata record by epoch and participantID
-func (s *MetadataService) ReadMetadata(epoch int, participantID string) (*shared.Metadata, error) {
+// ReadMetadata retrieves a metadata record by epoch and participantId
+func (s *MetadataService) ReadMetadata(epoch int, participantId string) (*shared.Metadata, error) {
 	epochStr := strconv.Itoa(epoch)
 	var metadata shared.Metadata
 
-	err := s.client.EvaluateTransaction(&metadata, "ReadMetadata", epochStr, participantID)
+	err := s.client.EvaluateTransaction(&metadata, "ReadMetadata", epochStr, participantId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query the metadata record: %w", err)
 	}
@@ -50,11 +50,11 @@ func (s *MetadataService) ReadMetadata(epoch int, participantID string) (*shared
 }
 
 // MetadataExists returns true if a metadata record exists
-func (s *MetadataService) MetadataExists(epoch int, participantID string) (bool, error) {
+func (s *MetadataService) MetadataExists(epoch int, participantId string) (bool, error) {
 	epochStr := strconv.Itoa(epoch)
 	var exists bool
 
-	err := s.client.EvaluateTransaction(&exists, "MetadataExists", epochStr, participantID)
+	err := s.client.EvaluateTransaction(&exists, "MetadataExists", epochStr, participantId)
 	if err != nil {
 		return false, fmt.Errorf("failed to query if metadata record exists: %w", err)
 	}
@@ -63,10 +63,10 @@ func (s *MetadataService) MetadataExists(epoch int, participantID string) (bool,
 }
 
 // DeleteMetadata deletes a metadata record, returns true if successful
-func (s *MetadataService) DeleteMetadata(epoch int, participantID string) (bool, error) {
+func (s *MetadataService) DeleteMetadata(epoch int, participantId string) (bool, error) {
 	epochStr := strconv.Itoa(epoch)
 
-	err := s.client.SubmitTransaction(nil, "DeleteMetadata", epochStr, participantID)
+	err := s.client.SubmitTransaction(nil, "DeleteMetadata", epochStr, participantId)
 	if err != nil {
 		return false, fmt.Errorf("failed to delete metadata record: %w", err)
 	}
@@ -77,14 +77,14 @@ func (s *MetadataService) DeleteMetadata(epoch int, participantID string) (bool,
 // UpdateMetadata updates an existing metadata record
 func (s *MetadataService) UpdateMetadata(
 	epoch int,
-	participantID string,
+	participantId string,
 	encapsulatedKey string,
 	encModelHash string,
 	homomorphicHash string,
 ) (bool, error) {
 	epochStr := strconv.Itoa(epoch)
 
-	err := s.client.SubmitTransaction(nil, "UpdateMetadata", epochStr, participantID, encapsulatedKey, encModelHash, homomorphicHash)
+	err := s.client.SubmitTransaction(nil, "UpdateMetadata", epochStr, participantId, encapsulatedKey, encModelHash, homomorphicHash)
 	if err != nil {
 		return false, fmt.Errorf("failed to update metadata record: %w", err)
 	}
@@ -114,10 +114,10 @@ func (s *MetadataService) GetAllMetadata() ([]shared.Metadata, error) {
 }
 
 // GetAllMetadataByParticipant queries all metadata entries from the ledger made by the participant
-func (s *MetadataService) GetAllMetadataByParticipant(participantID string) ([]shared.Metadata, error) {
+func (s *MetadataService) GetAllMetadataByParticipant(participantId string) ([]shared.Metadata, error) {
 	var metadataList []shared.Metadata
 
-	err := s.client.EvaluateTransaction(&metadataList, "GetAllMetadataByParticipant", participantID)
+	err := s.client.EvaluateTransaction(&metadataList, "GetAllMetadataByParticipant", participantId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query the metadata records: %w", err)
 	}
