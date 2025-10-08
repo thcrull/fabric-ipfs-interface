@@ -24,6 +24,9 @@ func (s *MetadataSmartContract) AddMetadata(
 	homomorphicHash string,
 ) error {
 	compositeKey, err := ctx.GetStub().CreateCompositeKey("metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
+	if err != nil {
+		return fmt.Errorf("failed creating composite key: %v", err)
+	}
 
 	exists, err := s.MetadataExists(ctx, epoch, participantId)
 	if err != nil {
@@ -51,6 +54,9 @@ func (s *MetadataSmartContract) AddMetadata(
 // ReadMetadata returns the metadata block stored in the world state with the given epoch and participant id.
 func (s *MetadataSmartContract) ReadMetadata(ctx contractapi.TransactionContextInterface, epoch int, participantId string) (*shared.Metadata, error) {
 	compositeKey, err := ctx.GetStub().CreateCompositeKey("metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
+	if err != nil {
+		return nil, fmt.Errorf("failed creating composite key: %v", err)
+	}
 
 	metadataJSON, err := ctx.GetStub().GetState(compositeKey)
 	if err != nil {
@@ -72,6 +78,9 @@ func (s *MetadataSmartContract) ReadMetadata(ctx contractapi.TransactionContextI
 // MetadataExists returns true when a metadata block with the given epoch and participantId exists in the world state
 func (s *MetadataSmartContract) MetadataExists(ctx contractapi.TransactionContextInterface, epoch int, participantId string) (bool, error) {
 	compositeKey, err := ctx.GetStub().CreateCompositeKey("metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
+	if err != nil {
+		return false, fmt.Errorf("failed creating composite key: %v", err)
+	}
 
 	metadataJSON, err := ctx.GetStub().GetState(compositeKey)
 	if err != nil {
@@ -92,6 +101,9 @@ func (s *MetadataSmartContract) DeleteMetadata(ctx contractapi.TransactionContex
 	}
 
 	compositeKey, err := ctx.GetStub().CreateCompositeKey("metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
+	if err != nil {
+		return fmt.Errorf("failed creating composite key: %v", err)
+	}
 
 	return ctx.GetStub().DelState(compositeKey)
 }
@@ -127,6 +139,9 @@ func (s *MetadataSmartContract) UpdateMetadata(
 	}
 
 	compositeKey, err := ctx.GetStub().CreateCompositeKey("metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
+	if err != nil {
+		return fmt.Errorf("failed creating composite key: %v", err)
+	}
 
 	return ctx.GetStub().PutState(compositeKey, metadataJSON)
 }
