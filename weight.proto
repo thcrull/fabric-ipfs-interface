@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package weight;
+
+option go_package = ".";
+
+message WeightModel {
+  repeated double values = 1;
+}

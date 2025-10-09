@@ -33,5 +33,6 @@ go.work.sum
 # .vscode/
 
 /fabric-samples
+/kubo
 
 config.yaml
