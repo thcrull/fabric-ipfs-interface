@@ -7,7 +7,6 @@ require (
 	github.com/hyperledger/fabric-gateway v1.9.0
 	github.com/ipfs/boxo v0.35.0
 	github.com/ipfs/kubo v0.38.0
-	golang.org/x/image v0.25.0
 	google.golang.org/grpc v1.75.1
 	google.golang.org/protobuf v1.36.9
 	gopkg.in/yaml.v3 v3.0.1

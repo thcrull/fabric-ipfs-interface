@@ -1,4 +1,4 @@
-package example
+package main
 
 import (
 	"context"
@@ -14,14 +14,14 @@ func main() {
 	ctx := context.Background()
 	configPath := "config.yaml"
 
-	// Load IPFS config from YAML file
+	// Load IPFS config from the YAML file
 	cfg, err := ipfsconfig.LoadConfig(configPath)
 	if err != nil {
 		fmt.Println("Failed to load config:", err)
 		return
 	}
 
-	// Initialize IPFS client with loaded config
+	// Initialise the IPFS client with loaded config
 	ipfsClient, err := ipfsclient.NewIpfsClient(cfg)
 	if err != nil {
 		fmt.Println("Failed to create IPFS client:", err)

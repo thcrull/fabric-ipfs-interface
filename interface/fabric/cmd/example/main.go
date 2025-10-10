@@ -1,4 +1,4 @@
-package example
+package main
 
 import (
 	"fmt"
@@ -25,6 +25,7 @@ func main() {
 		if err := client.Close(); err != nil {
 			log.Printf("Error closing client: %v", err)
 		}
+		fmt.Println("Closed the fabric client.")
 	}()
 
 	// Create the metadata service
@@ -147,12 +148,4 @@ func main() {
 	for _, m := range allMetadata4 {
 		fmt.Printf("  %+v\n", m)
 	}
-
-	// Close the client
-	err = client.Close()
-	if err != nil {
-		log.Fatalf("Failed to close client: %v", err)
-	}
-
-	fmt.Println("Closed the fabric client.")
 }
