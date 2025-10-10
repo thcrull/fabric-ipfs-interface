@@ -114,3 +114,18 @@ func (c *IpfsClient) UnpinFile(ctx context.Context, cid string) error {
 
 	return nil
 }
+
+// AddAndPinFile adds a protobuf message to IPFS and pins it.
+func (c *IpfsClient) AddAndPinFile(ctx context.Context, msg proto.Message) (string, error) {
+	cid, err := c.AddFile(ctx, msg)
+	if err != nil {
+		return "", fmt.Errorf("failed to add file to IPFS: %w", err)
+	}
+
+	err = c.PinFile(ctx, cid)
+	if err != nil {
+		return "", fmt.Errorf("failed to pin CID: %w", err)
+	}
+
+	return cid, nil
+}
