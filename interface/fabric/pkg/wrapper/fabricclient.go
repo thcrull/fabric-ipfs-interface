@@ -1,4 +1,4 @@
-package metadata
+package fabricclient
 
 import (
 	"encoding/json"

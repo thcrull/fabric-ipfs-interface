@@ -38,7 +38,7 @@ func (s *MetadataSmartContract) AddMetadata(
 
 	metadata := shared.Metadata{
 		Epoch:           epoch,
-		ParticipantID:   participantId,
+		ParticipantId:   participantId,
 		EncapsulatedKey: encapsulatedKey,
 		EncModelHash:    encModelHash,
 		HomomorphicHash: homomorphicHash,
@@ -51,8 +51,8 @@ func (s *MetadataSmartContract) AddMetadata(
 	return ctx.GetStub().PutState(compositeKey, metadataJSON)
 }
 
-// ReadMetadata returns the metadata record stored in the world state for the given epoch and participant id.
-func (s *MetadataSmartContract) ReadMetadata(ctx contractapi.TransactionContextInterface, epoch int, participantId string) (*shared.Metadata, error) {
+// GetMetadata returns the metadata record stored in the world state for the given epoch and participant id.
+func (s *MetadataSmartContract) GetMetadata(ctx contractapi.TransactionContextInterface, epoch int, participantId string) (*shared.Metadata, error) {
 	compositeKey, err := ctx.GetStub().CreateCompositeKey("metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
 	if err != nil {
 		return nil, fmt.Errorf("failed creating composite key: %v", err)
@@ -128,7 +128,7 @@ func (s *MetadataSmartContract) UpdateMetadata(
 	// overwriting original metadata with new metadata
 	metadata := shared.Metadata{
 		Epoch:           epoch,
-		ParticipantID:   participantId,
+		ParticipantId:   participantId,
 		EncapsulatedKey: encapsulatedKey,
 		EncModelHash:    encModelHash,
 		HomomorphicHash: homomorphicHash,
@@ -154,7 +154,7 @@ func (s *MetadataSmartContract) DeleteAllMetadata(ctx contractapi.TransactionCon
 	}
 
 	for _, metadataBlock := range metadataBlocks {
-		err := s.DeleteMetadata(ctx, metadataBlock.Epoch, metadataBlock.ParticipantID)
+		err := s.DeleteMetadata(ctx, metadataBlock.Epoch, metadataBlock.ParticipantId)
 		if err != nil {
 			return fmt.Errorf("error deleting metadata record: %v", err)
 		}

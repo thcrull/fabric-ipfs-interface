@@ -6,6 +6,7 @@ import (
 
 	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/pkg/config"
 	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/pkg/wrapper"
+	"github.com/thcrull/fabric-ipfs-interface/shared"
 )
 
 // Example use case of the Fabric client wrapper used for testing purposes.
@@ -17,7 +18,7 @@ func main() {
 	}
 
 	// Create the Fabric client
-	client, err := metadata.NewFabricClient(cfg)
+	client, err := fabricclient.NewFabricClient(cfg)
 	if err != nil {
 		log.Fatalf("Failed to create Fabric client: %v", err)
 	}
@@ -29,26 +30,29 @@ func main() {
 	}()
 
 	// Create the metadata service
-	service := metadata.NewMetadataService(client)
+	service, err := fabricclient.NewMetadataService(cfg)
+	if err != nil {
+		log.Fatalf("Failed to create metadata service: %v", err)
+	}
 
-	// Add the metadata records
-	newMetadata, err := service.AddMetadata(15, "tom", "encapkey1", "encmodelhash1", "homhash1")
+	// Add metadata records
+	err = service.AddMetadata(&shared.Metadata{Epoch: 15, ParticipantId: "tom", EncapsulatedKey: "encapkey1", EncModelHash: "encmodelhash1", HomomorphicHash: "homhash1"})
 	if err != nil {
 		log.Fatalf("Failed to add metadata: %v", err)
 	}
-	fmt.Printf("Added metadata: %+v\n", newMetadata)
+	fmt.Printf("Added metadata successfully.\n")
 
-	newMetadata1, err := service.AddMetadata(10, "tom", "encapkey1", "encmodelhash1", "homhash1")
+	err = service.AddMetadata(&shared.Metadata{Epoch: 10, ParticipantId: "tom", EncapsulatedKey: "encapkey1", EncModelHash: "encmodelhash1", HomomorphicHash: "homhash1"})
 	if err != nil {
 		log.Fatalf("Failed to add metadata: %v", err)
 	}
-	fmt.Printf("Added metadata: %+v\n", newMetadata1)
+	fmt.Printf("Added metadata successfully.\n")
 
-	newMetadata2, err := service.AddMetadata(15, "tom1", "encapkey1", "encmodelhash1", "homhash1")
+	err = service.AddMetadata(&shared.Metadata{Epoch: 15, ParticipantId: "tom1", EncapsulatedKey: "encapkey1", EncModelHash: "encmodelhash1", HomomorphicHash: "homhash1"})
 	if err != nil {
 		log.Fatalf("Failed to add metadata: %v", err)
 	}
-	fmt.Printf("Added metadata: %+v\n", newMetadata2)
+	fmt.Printf("Added metadata successfully.\n")
 
 	// Get all metadata records
 	allMetadata, err := service.GetAllMetadata()
@@ -56,96 +60,96 @@ func main() {
 		log.Fatalf("Failed to get all metadata: %v", err)
 	}
 	fmt.Printf("All metadata:\n")
-	for _, m := range allMetadata {
-		fmt.Printf("  %+v\n", m)
+	for _, metadata := range allMetadata {
+		fmt.Printf("  %+v\n", metadata)
 	}
 
 	// Get all metadata records by participant
-	allMetadata1, err := service.GetAllMetadataByParticipant("tom")
+	participantMetadata, err := service.GetAllMetadataByParticipant("tom")
 	if err != nil {
 		log.Fatalf("Failed to get all metadata from participant %s: %v", "tom", err)
 	}
 	fmt.Printf("All metadata from participant %s:\n", "tom")
-	for _, m := range allMetadata1 {
-		fmt.Printf("  %+v\n", m)
+	for _, metadata := range participantMetadata {
+		fmt.Printf("  %+v\n", metadata)
 	}
 
 	// Get all metadata records by epoch
-	allMetadata2, err := service.GetAllMetadataByEpoch(15)
+	epochMetadata, err := service.GetAllMetadataByEpoch(15)
 	if err != nil {
 		log.Fatalf("Failed to get all metadata from epoch %d: %v", 15, err)
 	}
 	fmt.Printf("All metadata from epoch %d:\n", 15)
-	for _, m := range allMetadata2 {
-		fmt.Printf("  %+v\n", m)
+	for _, metadata := range epochMetadata {
+		fmt.Printf("  %+v\n", metadata)
 	}
 
 	// Read the metadata record
-	readMetadata, err := service.ReadMetadata(15, "tom")
+	metadataRecord, err := service.GetMetadata(15, "tom")
 	if err != nil {
 		log.Fatalf("Failed to read metadata: %v", err)
 	}
-	fmt.Printf("Read metadata: %+v\n", readMetadata)
+	fmt.Printf("Read metadata: %+v\n", metadataRecord)
 
 	// Update the metadata record
-	updatedMetadata, err := service.UpdateMetadata(15, "tom", "encapkey2", "encmodelhash2", "homhash2")
+	err = service.UpdateMetadata(&shared.Metadata{Epoch: 15, ParticipantId: "tom", EncapsulatedKey: "encapkey2", EncModelHash: "encmodelhash2", HomomorphicHash: "homhash2"})
 	if err != nil {
 		log.Fatalf("Failed to update metadata: %v", err)
 	}
-	fmt.Printf("Updated metadata: %+v\n", updatedMetadata)
+	fmt.Printf("Updated metadata successfully.\n")
 
-	// Read the metadata record
-	readMetadata2, err := service.ReadMetadata(15, "tom")
+	// Read the updated metadata record
+	updatedMetadataRecord, err := service.GetMetadata(15, "tom")
 	if err != nil {
 		log.Fatalf("Failed to read metadata: %v", err)
 	}
-	fmt.Printf("Read metadata: %+v\n", readMetadata2)
+	fmt.Printf("Read metadata: %+v\n", updatedMetadataRecord)
 
 	// Check if metadata exists
-	exists, err := service.MetadataExists(15, "tom")
+	metadataExists, err := service.MetadataExists(15, "tom")
 	if err != nil {
 		log.Fatalf("Failed to check metadata existence: %v", err)
 	}
-	fmt.Printf("Metadata exists: %v\n", exists)
+	fmt.Printf("Metadata exists: %v\n", metadataExists)
 
 	// Delete the metadata record
-	deleted, err := service.DeleteMetadata(15, "tom")
+	err = service.DeleteMetadata(15, "tom")
 	if err != nil {
 		log.Fatalf("Failed to delete metadata: %v", err)
 	}
-	fmt.Printf("Metadata deleted: %v\n", deleted)
+	fmt.Printf("Metadata deleted successfully.\n")
 
-	// Check if metadata exists
-	exists2, err := service.MetadataExists(15, "tom")
+	// Check if metadata still exists
+	metadataStillExists, err := service.MetadataExists(15, "tom")
 	if err != nil {
 		log.Fatalf("Failed to check metadata existence: %v", err)
 	}
-	fmt.Printf("Metadata exists: %v\n", exists2)
+	fmt.Printf("Metadata exists: %v\n", metadataStillExists)
 
-	// Get all metadata records
-	allMetadata3, err := service.GetAllMetadata()
+	// Get remaining metadata records
+	remainingMetadata, err := service.GetAllMetadata()
 	if err != nil {
 		log.Fatalf("Failed to get all metadata: %v", err)
 	}
 	fmt.Printf("All metadata:\n")
-	for _, m := range allMetadata3 {
-		fmt.Printf("  %+v\n", m)
+	for _, metadata := range remainingMetadata {
+		fmt.Printf("  %+v\n", metadata)
 	}
 
 	// Delete all metadata records
-	deleteAllResponse, err := service.DeleteAllMetadata()
+	err = service.DeleteAllMetadata()
 	if err != nil {
 		log.Fatalf("Failed to delete all metadata: %v", err)
 	}
-	fmt.Printf("Deleted all metadata: %t\n", deleteAllResponse)
+	fmt.Printf("Deleted all metadata successfully.\n")
 
-	// Get all metadata records
-	allMetadata4, err := service.GetAllMetadata()
+	// Confirm deletion
+	finalMetadataList, err := service.GetAllMetadata()
 	if err != nil {
 		log.Fatalf("Failed to get all metadata: %v", err)
 	}
 	fmt.Printf("All metadata:\n")
-	for _, m := range allMetadata4 {
-		fmt.Printf("  %+v\n", m)
+	for _, metadata := range finalMetadataList {
+		fmt.Printf("  %+v\n", metadata)
 	}
 }
