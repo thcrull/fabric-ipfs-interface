@@ -28,7 +28,7 @@ func main() {
 		return
 	}
 
-	// Create protobuf message to add
+	// Create the protobuf message to add
 	weightModel := &pb.WeightModel{
 		Values: []float64{1.01, 2.01, 3.01, 4.01, 5.01},
 	}
