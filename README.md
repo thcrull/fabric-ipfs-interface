@@ -7,18 +7,41 @@ This repository provides:
 - **Chaincode packages**: smart contracts specific to the research use case.
 - An **IPFS interface**: integration helpers to interact with IPFS for decentralized storage.
 
+### To run the Fabtic interface example
+
+If the fabric samples are not installed, run the following command:
 ```bash
 ./install-fabric.sh docker samples binary
 ```
 
+To start the fabric network and deploy the chaincode:
 ```bash
 cd fabric-samples/test-network
 ./network.sh up createChannel
 ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go -ccl go
 ```
 
+To run the example:
 ```bash
 go mod tidy
 cd interface/fabric/cmd/example
+go run main.go
+```
+----------------------------------
+
+### To run the IPFS interface example
+
+If the IPFS has not been instatiated, run the command:
+```bash
+ipfs init
+```
+
+To start the IPFS daemon:
+```bash
+ipfs daemon
+```
+To run the example:
+```bash
+cd interface/ipfs/cmd/example
 go run main.go
 ```
