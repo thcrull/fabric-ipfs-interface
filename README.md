@@ -7,7 +7,10 @@ This repository provides:
 - **Chaincode packages**: smart contracts specific to the research use case.
 - An **IPFS interface**: integration helpers to interact with IPFS for decentralized storage.
 
+----------------------------------
+
 ### To run the Fabtic interface example
+All commands should be run from the root of this repository.
 
 If the fabric samples are not installed, run the following command:
 ```bash
@@ -30,9 +33,13 @@ go run main.go
 ----------------------------------
 
 ### To run the IPFS interface example
+All commands should be run from the root of this repository.
 
-If the IPFS has not been instatiated, run the command:
+If the IPFS has not been instatiated, run the commands:
 ```bash
+tar -xvzf kubo_v0.38.1_linux-amd64.tar.gz
+cd kubo
+sudo bash install.sh
 ipfs init
 ```
 
@@ -40,6 +47,7 @@ To start the IPFS daemon:
 ```bash
 ipfs daemon
 ```
+
 To run the example:
 ```bash
 cd interface/ipfs/cmd/example
