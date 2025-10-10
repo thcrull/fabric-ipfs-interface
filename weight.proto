@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package weight;
 
-option go_package = ".";
+option go_package = "./weigthpb";
 
 message WeightModel {
   repeated double values = 1;
