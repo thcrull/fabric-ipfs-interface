@@ -9,10 +9,9 @@ import (
 	pb "github.com/thcrull/fabric-ipfs-interface/weightpb"
 )
 
+// Example use case of the IPFS client wrapper used for testing purposes.
 func main() {
 	ctx := context.Background()
-
-	// Hardcoded config file path
 	configPath := "config.yaml"
 
 	// Load IPFS config from YAML file
@@ -34,7 +33,7 @@ func main() {
 		Values: []float64{1.01, 2.01, 3.01, 4.01, 5.01},
 	}
 
-	// Add protobuf data to IPFS (no pinning yet)
+	// Add protobuf data to IPFS
 	cid, err := ipfsClient.AddFile(ctx, weightModel)
 	if err != nil {
 		fmt.Println("Failed to add file to IPFS:", err)

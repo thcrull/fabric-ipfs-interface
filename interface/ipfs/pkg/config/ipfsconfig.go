@@ -7,8 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// IpfsConfig holds the configuration for an IPFS client, including
-// the node's connection details.
+// IpfsConfig holds the configuration necessary for connecting to an IPFS node.
 type IpfsConfig struct {
 	Ipfs struct {
 		NodePath string `yaml:"node_path"`

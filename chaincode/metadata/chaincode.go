@@ -9,12 +9,12 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
 )
 
-// MetadataSmartContract provides functions for managing metadata
+// MetadataSmartContract provides functions for managing metadata records in the world state of a Fabric network.
 type MetadataSmartContract struct {
 	contractapi.Contract
 }
 
-// AddMetadata issues a new metadata block to the world state with given details.
+// AddMetadata issues a new metadata record to the world state with the given details.
 func (s *MetadataSmartContract) AddMetadata(
 	ctx contractapi.TransactionContextInterface,
 	epoch int,
@@ -33,7 +33,7 @@ func (s *MetadataSmartContract) AddMetadata(
 		return err
 	}
 	if exists {
-		return fmt.Errorf("the metadata block for epoch %d from participant %s already exists", epoch, participantId)
+		return fmt.Errorf("the metadata record for epoch %d from participant %s already exists", epoch, participantId)
 	}
 
 	metadata := shared.Metadata{
@@ -51,7 +51,7 @@ func (s *MetadataSmartContract) AddMetadata(
 	return ctx.GetStub().PutState(compositeKey, metadataJSON)
 }
 
-// ReadMetadata returns the metadata block stored in the world state with the given epoch and participant id.
+// ReadMetadata returns the metadata record stored in the world state for the given epoch and participant id.
 func (s *MetadataSmartContract) ReadMetadata(ctx contractapi.TransactionContextInterface, epoch int, participantId string) (*shared.Metadata, error) {
 	compositeKey, err := ctx.GetStub().CreateCompositeKey("metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
 	if err != nil {
@@ -63,7 +63,7 @@ func (s *MetadataSmartContract) ReadMetadata(ctx contractapi.TransactionContextI
 		return nil, fmt.Errorf("failed to read from world state: %v", err)
 	}
 	if metadataJSON == nil {
-		return nil, fmt.Errorf("the metadata block for epoch %d from participant %s does not exist", epoch, participantId)
+		return nil, fmt.Errorf("the metadata record for epoch %d from participant %s does not exist", epoch, participantId)
 	}
 
 	var metadata shared.Metadata
@@ -75,7 +75,7 @@ func (s *MetadataSmartContract) ReadMetadata(ctx contractapi.TransactionContextI
 	return &metadata, nil
 }
 
-// MetadataExists returns true when a metadata block with the given epoch and participantId exists in the world state
+// MetadataExists returns true when a metadata record for the given epoch and participantId exists in the world state
 func (s *MetadataSmartContract) MetadataExists(ctx contractapi.TransactionContextInterface, epoch int, participantId string) (bool, error) {
 	compositeKey, err := ctx.GetStub().CreateCompositeKey("metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
 	if err != nil {
@@ -90,14 +90,14 @@ func (s *MetadataSmartContract) MetadataExists(ctx contractapi.TransactionContex
 	return metadataJSON != nil, nil
 }
 
-// DeleteMetadata deletes a given metadata block from the world state.
+// DeleteMetadata deletes a given metadata record from the world state.
 func (s *MetadataSmartContract) DeleteMetadata(ctx contractapi.TransactionContextInterface, epoch int, participantId string) error {
 	exists, err := s.MetadataExists(ctx, epoch, participantId)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		return fmt.Errorf("the metadata block for epoch %d from participant %s does not exist", epoch, participantId)
+		return fmt.Errorf("the metadata record for epoch %d from participant %s does not exist", epoch, participantId)
 	}
 
 	compositeKey, err := ctx.GetStub().CreateCompositeKey("metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
@@ -108,7 +108,7 @@ func (s *MetadataSmartContract) DeleteMetadata(ctx contractapi.TransactionContex
 	return ctx.GetStub().DelState(compositeKey)
 }
 
-// UpdateMetadata updates an existing metadata block in the world state with provided parameters.
+// UpdateMetadata updates an existing metadata record in the world state with provided parameters.
 func (s *MetadataSmartContract) UpdateMetadata(
 	ctx contractapi.TransactionContextInterface,
 	epoch int,
@@ -122,7 +122,7 @@ func (s *MetadataSmartContract) UpdateMetadata(
 		return err
 	}
 	if !exists {
-		return fmt.Errorf("the metadata block for epoch %d from participant %s does not exist", epoch, participantId)
+		return fmt.Errorf("the metadata record for epoch %d from participant %s does not exist", epoch, participantId)
 	}
 
 	// overwriting original metadata with new metadata
@@ -146,24 +146,24 @@ func (s *MetadataSmartContract) UpdateMetadata(
 	return ctx.GetStub().PutState(compositeKey, metadataJSON)
 }
 
-// DeleteAllMetadata deletes all metadata blocks from the world state.
+// DeleteAllMetadata deletes all metadata records from the world state.
 func (s *MetadataSmartContract) DeleteAllMetadata(ctx contractapi.TransactionContextInterface) error {
 	metadataBlocks, err := s.GetAllMetadata(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting all metadata blocks for deletion: %v", err)
+		return fmt.Errorf("error getting all metadata records for deletion: %v", err)
 	}
 
 	for _, metadataBlock := range metadataBlocks {
 		err := s.DeleteMetadata(ctx, metadataBlock.Epoch, metadataBlock.ParticipantID)
 		if err != nil {
-			return fmt.Errorf("error deleting metadata block: %v", err)
+			return fmt.Errorf("error deleting metadata record: %v", err)
 		}
 	}
 
 	return nil
 }
 
-// GetAllMetadata returns all metadata blocks found in the world state
+// GetAllMetadata returns all metadata records found in the world state.
 func (s *MetadataSmartContract) GetAllMetadata(ctx contractapi.TransactionContextInterface) ([]*shared.Metadata, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByPartialCompositeKey("metadata", []string{})
 	if err != nil {
@@ -188,7 +188,7 @@ func (s *MetadataSmartContract) GetAllMetadata(ctx contractapi.TransactionContex
 	return metadataBlocks, nil
 }
 
-// GetAllMetadataByParticipant returns all metadata blocks found in the world state
+// GetAllMetadataByParticipant returns all metadata records found in the world state created by the participant.
 func (s *MetadataSmartContract) GetAllMetadataByParticipant(ctx contractapi.TransactionContextInterface, participantId string) ([]*shared.Metadata, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByPartialCompositeKey("metadata", []string{participantId})
 	if err != nil {
@@ -213,7 +213,7 @@ func (s *MetadataSmartContract) GetAllMetadataByParticipant(ctx contractapi.Tran
 	return metadataBlocks, nil
 }
 
-// GetAllMetadataByEpoch returns all metadata blocks found in the world state
+// GetAllMetadataByEpoch returns all metadata records found in the world state for the given epoch.
 func (s *MetadataSmartContract) GetAllMetadataByEpoch(ctx contractapi.TransactionContextInterface, epoch int) ([]*shared.Metadata, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByPartialCompositeKey("metadata", []string{})
 	if err != nil {

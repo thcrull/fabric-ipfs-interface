@@ -14,12 +14,15 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// IpfsClient is a wrapper around the IPFS node HTTP API. It provides
+// convenient methods for interacting with the IPFS node.
 type IpfsClient struct {
 	httpClient  *http.Client
 	NodeHttpApi *rpc.HttpApi
 }
 
-func NewIpfsClient(cfg *config.IpfsConfig) (*IpfsClient, error) {
+// NewIpfsClient creates a new IpfsClient instance.
+func NewIpfsClient(cfg *ipfsconfig.IpfsConfig) (*IpfsClient, error) {
 	httpClient := &http.Client{}
 
 	nodeHttpApi, err := rpc.NewURLApiWithClient(cfg.Ipfs.NodePath, httpClient)
@@ -33,7 +36,7 @@ func NewIpfsClient(cfg *config.IpfsConfig) (*IpfsClient, error) {
 	}, nil
 }
 
-// AddFile uploads a protobuf message to IPFS and returns the CID (not pinned).
+// AddFile adds a protobuf message to IPFS and returns its CID.
 func (c *IpfsClient) AddFile(ctx context.Context, msg proto.Message) (string, error) {
 	data, err := proto.Marshal(msg)
 	if err != nil {
@@ -50,7 +53,7 @@ func (c *IpfsClient) AddFile(ctx context.Context, msg proto.Message) (string, er
 	return cid.String(), nil
 }
 
-// GetFile retrieves a file from IPFS by CID and unmarshals it into a protobuf message.
+// GetFile retrieves a protobuf message from IPFS, unmarshels it and leaves the result in msg.
 func (c *IpfsClient) GetFile(ctx context.Context, cid string, msg proto.Message) error {
 	ipfsPath, err := path.NewPath(cid)
 	if err != nil {
@@ -79,7 +82,9 @@ func (c *IpfsClient) GetFile(ctx context.Context, cid string, msg proto.Message)
 	return nil
 }
 
-// PinFile explicitly pins a CID to the local IPFS node.
+// PinFile pins a CID to the local IPFS node. Without pinning, the data related
+// to the CID will be stored in the IPFS but will get deleted by the garbage collector later on.
+// Pinning the CID will prevent this from happening.
 func (c *IpfsClient) PinFile(ctx context.Context, cid string) error {
 	ipfsPath, err := path.NewPath(cid)
 	if err != nil {
@@ -94,7 +99,8 @@ func (c *IpfsClient) PinFile(ctx context.Context, cid string) error {
 	return nil
 }
 
-// UnpinFile removes a pin for a CID from the local IPFS node.
+// UnpinFile removes a pin for a CID from the local IPFS node, letting the garbage collector
+// delete the data related to the CID.
 func (c *IpfsClient) UnpinFile(ctx context.Context, cid string) error {
 	ipfsPath, err := path.NewPath(cid)
 	if err != nil {

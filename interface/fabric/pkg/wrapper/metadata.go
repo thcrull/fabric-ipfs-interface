@@ -7,13 +7,13 @@ import (
 	"github.com/thcrull/fabric-ipfs-interface/shared"
 )
 
-// MetadataService wraps a Fabric client and provides convenient methods
-// for interacting with metadata chaincode.
+// MetadataService wraps a Fabric client and provides methods
+// for interacting with the metadata chaincode.
 type MetadataService struct {
 	client *FabricClient
 }
 
-// NewMetadataService creates a service for metadata operations
+// NewMetadataService creates a service for metadata transactions
 func NewMetadataService(client *FabricClient) *MetadataService {
 	return &MetadataService{client: client}
 }
@@ -102,7 +102,7 @@ func (s *MetadataService) DeleteAllMetadata() (bool, error) {
 	return true, nil
 }
 
-// GetAllMetadata queries all metadata entries from the ledger
+// GetAllMetadata queries all metadata records from the ledger
 func (s *MetadataService) GetAllMetadata() ([]shared.Metadata, error) {
 	var metadataList []shared.Metadata
 
@@ -113,7 +113,7 @@ func (s *MetadataService) GetAllMetadata() ([]shared.Metadata, error) {
 	return metadataList, nil
 }
 
-// GetAllMetadataByParticipant queries all metadata entries from the ledger made by the participant
+// GetAllMetadataByParticipant queries all metadata records from the ledger made by the participant
 func (s *MetadataService) GetAllMetadataByParticipant(participantId string) ([]shared.Metadata, error) {
 	var metadataList []shared.Metadata
 
@@ -125,7 +125,7 @@ func (s *MetadataService) GetAllMetadataByParticipant(participantId string) ([]s
 	return metadataList, nil
 }
 
-// GetAllMetadataByEpoch queries all metadata entries from the ledger from the epoch
+// GetAllMetadataByEpoch queries all metadata records from the ledger from the epoch
 func (s *MetadataService) GetAllMetadataByEpoch(epoch int) ([]shared.Metadata, error) {
 	epochStr := strconv.Itoa(epoch)
 	var metadataList []shared.Metadata

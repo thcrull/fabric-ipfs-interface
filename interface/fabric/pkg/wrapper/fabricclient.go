@@ -10,8 +10,8 @@ import (
 	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/pkg/config"
 )
 
-// Client is a wrapper around a Fabric Gateway connection, providing
-// access to a specific network and smart contract for submitting and querying transactions.
+// FabricClient is a wrapper around the Fabric Gateway client. It provides
+// convenient methods for interacting with the Fabric network.
 type FabricClient struct {
 	Gateway  *client.Gateway
 	Network  *client.Network
@@ -19,11 +19,11 @@ type FabricClient struct {
 	conn     *grpc.ClientConn
 }
 
-// NewClient creates a new Client instance by connecting to the Fabric Gateway.
+// NewFabricClient creates a new FabricClient instance by connecting to the Fabric Gateway.
 // It sets up the gRPC connection, loads the client identity and signer,
 // and prepares the network and contract for interaction.
 // Returns an error if any of these steps fail.
-func NewClient(cfg *fabricconfig.FabricConfig) (*FabricClient, error) {
+func NewFabricClient(cfg *fabricconfig.FabricConfig) (*FabricClient, error) {
 	conn, err := bcutils.NewGrpcConnection(cfg)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (c *FabricClient) SubmitTransaction(out interface{}, name string, args ...s
 	return json.Unmarshal(res, out)
 }
 
-// EvaluateTransaction evaluates (queries) a transaction without modifying the ledger state.
+// EvaluateTransaction evaluates a transaction without modifying the ledger state. Used for querying the ledger.
 // Name is the chaincode function name, args are its parameters, and out is the output address.
 // Returns the query result or an error.
 func (c *FabricClient) EvaluateTransaction(out interface{}, name string, args ...string) error {

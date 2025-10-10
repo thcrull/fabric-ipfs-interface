@@ -7,8 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Config holds the configuration for a Fabric client, including
-// the user's identity and network connection details.
+// FabricConfig holds the configuration necessary for connecting to a Fabric network peer.
 type FabricConfig struct {
 	Identity struct {
 		CertPath string `yaml:"cert_path"`
@@ -26,7 +25,7 @@ type FabricConfig struct {
 }
 
 // LoadConfig reads a YAML configuration file from the given path
-// and unmarshals it into a Config struct. Returns an error if the
+// and unmarshals it into a FabricConfig struct. Returns an error if the
 // file cannot be read or if the YAML is invalid.
 func LoadConfig(path string) (*FabricConfig, error) {
 	data, err := os.ReadFile(path)
