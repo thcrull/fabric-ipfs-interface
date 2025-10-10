@@ -10,11 +10,11 @@ import (
 // MetadataService wraps a Fabric client and provides convenient methods
 // for interacting with metadata chaincode.
 type MetadataService struct {
-	client *Client
+	client *FabricClient
 }
 
 // NewMetadataService creates a service for metadata operations
-func NewMetadataService(client *Client) *MetadataService {
+func NewMetadataService(client *FabricClient) *MetadataService {
 	return &MetadataService{client: client}
 }
 

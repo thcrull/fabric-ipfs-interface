@@ -1,16 +1,16 @@
-package main
+package example
 
 import (
 	"fmt"
 	"log"
 
-	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/pkg/blockchain"
 	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/pkg/config"
+	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/pkg/wrapper"
 )
 
 func main() {
 	// Load Fabric configuration
-	cfg, err := config.LoadConfig("config.yaml")
+	cfg, err := fabricconfig.LoadConfig("config.yaml")
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}

@@ -12,7 +12,7 @@ import (
 
 // Client is a wrapper around a Fabric Gateway connection, providing
 // access to a specific network and smart contract for submitting and querying transactions.
-type Client struct {
+type FabricClient struct {
 	Gateway  *client.Gateway
 	Network  *client.Network
 	Contract *client.Contract
@@ -23,7 +23,7 @@ type Client struct {
 // It sets up the gRPC connection, loads the client identity and signer,
 // and prepares the network and contract for interaction.
 // Returns an error if any of these steps fail.
-func NewClient(cfg *config.Config) (*Client, error) {
+func NewClient(cfg *fabricconfig.FabricConfig) (*FabricClient, error) {
 	conn, err := bcutils.NewGrpcConnection(cfg)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func NewClient(cfg *config.Config) (*Client, error) {
 	network := gw.GetNetwork(cfg.Network.ChannelName)
 	contract := network.GetContract(cfg.Network.ChaincodeName)
 
-	return &Client{
+	return &FabricClient{
 		Gateway:  gw,
 		Network:  network,
 		Contract: contract,
@@ -65,7 +65,7 @@ func NewClient(cfg *config.Config) (*Client, error) {
 // SubmitTransaction submits a transaction that modifies the ledger state.
 // Name is the chaincode function name, args are its parameters, and out is the output address.
 // Returns the transaction result or an error.
-func (c *Client) SubmitTransaction(out interface{}, name string, args ...string) error {
+func (c *FabricClient) SubmitTransaction(out interface{}, name string, args ...string) error {
 	res, err := c.Contract.SubmitTransaction(name, args...)
 	if err != nil {
 		return err
@@ -81,7 +81,7 @@ func (c *Client) SubmitTransaction(out interface{}, name string, args ...string)
 // EvaluateTransaction evaluates (queries) a transaction without modifying the ledger state.
 // Name is the chaincode function name, args are its parameters, and out is the output address.
 // Returns the query result or an error.
-func (c *Client) EvaluateTransaction(out interface{}, name string, args ...string) error {
+func (c *FabricClient) EvaluateTransaction(out interface{}, name string, args ...string) error {
 	res, err := c.Contract.EvaluateTransaction(name, args...)
 	if err != nil {
 		return err
@@ -96,7 +96,7 @@ func (c *Client) EvaluateTransaction(out interface{}, name string, args ...strin
 
 // Close cleans up the Client by closing the Gateway and gRPC connection.
 // Returns an error if closing any resource fails.
-func (c *Client) Close() error {
+func (c *FabricClient) Close() error {
 	err := c.Gateway.Close()
 	if err != nil {
 		return err

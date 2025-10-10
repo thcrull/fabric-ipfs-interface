@@ -1,11 +1,11 @@
-package main
+package example
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/pkg/config"
-	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/pkg/ipfs"
+	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/pkg/wrapper"
 	pb "github.com/thcrull/fabric-ipfs-interface/weightpb"
 )
 
@@ -16,14 +16,14 @@ func main() {
 	configPath := "config.yaml"
 
 	// Load IPFS config from YAML file
-	cfg, err := config.LoadConfig(configPath)
+	cfg, err := ipfsconfig.LoadConfig(configPath)
 	if err != nil {
 		fmt.Println("Failed to load config:", err)
 		return
 	}
 
 	// Initialize IPFS client with loaded config
-	ipfsClient, err := client.NewIpfsClient(cfg)
+	ipfsClient, err := ipfsclient.NewIpfsClient(cfg)
 	if err != nil {
 		fmt.Println("Failed to create IPFS client:", err)
 		return

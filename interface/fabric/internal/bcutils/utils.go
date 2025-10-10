@@ -16,7 +16,7 @@ import (
 // NewGrpcConnection creates a new gRPC client connection to a Fabric peer.
 // It loads the TLS certificate from the given config, adds it to a certificate pool,
 // and returns a secure gRPC connection to the peer specified in cfg.Network.PeerEndpoint.
-func NewGrpcConnection(cfg *config.Config) (*grpc.ClientConn, error) {
+func NewGrpcConnection(cfg *fabricconfig.FabricConfig) (*grpc.ClientConn, error) {
 	tlsCertificatePEM, err := os.ReadFile(cfg.Network.TLSCertPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read TLS certificate: %w", err)
@@ -37,7 +37,7 @@ func NewGrpcConnection(cfg *config.Config) (*grpc.ClientConn, error) {
 // NewIdentity creates a Fabric client identity using an X.509 certificate.
 // It reads and parses the certificate from cfg.Identity.CertPath and associates it
 // with the MSP ID specified in cfg.Identity.MspID.
-func NewIdentity(cfg *config.Config) (*identity.X509Identity, error) {
+func NewIdentity(cfg *fabricconfig.FabricConfig) (*identity.X509Identity, error) {
 	certificatePEM, err := os.ReadFile(cfg.Identity.CertPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read certificate: %w", err)
@@ -58,7 +58,7 @@ func NewIdentity(cfg *config.Config) (*identity.X509Identity, error) {
 
 // NewSign creates a digital signer using a private key.
 // The private key is read from cfg.Identity.KeyPath and is used to sign transaction messages.
-func NewSign(cfg *config.Config) (identity.Sign, error) {
+func NewSign(cfg *fabricconfig.FabricConfig) (identity.Sign, error) {
 	privateKeyPEM, err := os.ReadFile(cfg.Identity.KeyPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read private key: %w", err)

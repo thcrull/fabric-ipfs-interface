@@ -8,6 +8,3 @@ type Metadata struct {
 	EncModelHash    string `json:"enc_model_hash"`
 	HomomorphicHash string `json:"homomorphic_hash"`
 }
-
-// WeightMatrix represents a matrix of weights
-type WeightMatrix [][]float64
