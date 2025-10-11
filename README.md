@@ -24,10 +24,10 @@ cd fabric-samples/test-network
 ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go -ccl go
 ```
 
-To run the example:
+To run the fabric example:
 ```bash
 go mod tidy
-cd interface/fabric/cmd/example
+cd interface/fabric/example
 go run main.go
 ```
 ----------------------------------
@@ -50,6 +50,18 @@ ipfs daemon
 
 To run the example:
 ```bash
-cd interface/ipfs/cmd/example
+cd interface/ipfs/example
+go run main.go
+```
+
+----------------------------------
+
+### To run the example application
+All commands should be run from the root of this repository,
+and both the fabric and IPFS networks should be running (see above).
+
+```bash
+go mod tidy
+cd interface/example
 go run main.go
 ```

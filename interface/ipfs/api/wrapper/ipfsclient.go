@@ -10,7 +10,7 @@ import (
 	"github.com/ipfs/boxo/files"
 	"github.com/ipfs/boxo/path"
 	"github.com/ipfs/kubo/client/rpc"
-	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/pkg/config"
+	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/api/config"
 	"google.golang.org/protobuf/proto"
 )
 

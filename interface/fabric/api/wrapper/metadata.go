@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/pkg/config"
+	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/config"
 	"github.com/thcrull/fabric-ipfs-interface/shared"
 )
 

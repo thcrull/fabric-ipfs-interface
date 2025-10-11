@@ -1,4 +1,4 @@
-package bcutils
+package fabricutils
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/pkg/config"
+	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/config"
 )
 
 // NewGrpcConnection creates a new gRPC client connection to a Fabric peer.

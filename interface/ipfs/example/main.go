@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/pkg/config"
-	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/pkg/wrapper"
+	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/api/config"
+	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/api/wrapper"
 	pb "github.com/thcrull/fabric-ipfs-interface/weightpb"
 )
 

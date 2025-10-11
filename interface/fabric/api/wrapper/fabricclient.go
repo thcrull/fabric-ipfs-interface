@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
-	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/internal/bcutils"
+	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/utils"
 	"google.golang.org/grpc"
 
-	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/pkg/config"
+	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/config"
 )
 
 // FabricClient is a wrapper around the Fabric Gateway client. It provides
@@ -24,18 +24,18 @@ type FabricClient struct {
 // and prepares the network and contract for interaction.
 // Returns an error if any of these steps fail.
 func NewFabricClient(cfg *fabricconfig.FabricConfig) (*FabricClient, error) {
-	conn, err := bcutils.NewGrpcConnection(cfg)
+	conn, err := fabricutils.NewGrpcConnection(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	id, err := bcutils.NewIdentity(cfg)
+	id, err := fabricutils.NewIdentity(cfg)
 	if err != nil {
 		conn.Close()
 		return nil, err
 	}
 
-	sign, err := bcutils.NewSign(cfg)
+	sign, err := fabricutils.NewSign(cfg)
 	if err != nil {
 		conn.Close()
 		return nil, err

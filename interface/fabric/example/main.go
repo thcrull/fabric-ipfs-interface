@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/pkg/config"
-	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/pkg/wrapper"
+	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/config"
+	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/wrapper"
 	"github.com/thcrull/fabric-ipfs-interface/shared"
 )
 

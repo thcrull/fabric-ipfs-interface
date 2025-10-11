@@ -4,10 +4,10 @@ import (
 	"context"
 	"log"
 
-	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/pkg/config"
-	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/pkg/wrapper"
-	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/pkg/config"
-	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/pkg/wrapper"
+	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/config"
+	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/wrapper"
+	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/api/config"
+	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/api/wrapper"
 	"github.com/thcrull/fabric-ipfs-interface/shared"
 	pb "github.com/thcrull/fabric-ipfs-interface/weightpb"
 )
@@ -96,9 +96,9 @@ func main() {
 	}
 	log.Printf("Fetched weight model: %+v", fetchedWeightModel.Values)
 
-	//------------------------------------------------------------------
+	//--------------------------------------------------------------------------------
 	// 4. Unpin the CID from the IPFS and delete the metadata from the Fabric network
-	//------------------------------------------------------------------
+	//--------------------------------------------------------------------------------
 
 	if ipfsClient.UnpinFile(context.Background(), metadata.EncModelHash) != nil {
 		log.Fatalf("error unpinning file from IPFS: %v", err)
