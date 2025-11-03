@@ -249,8 +249,8 @@ func (s *MetadataSmartContract) GetAllParticipantModelMetadataByEpoch(ctx contra
 func (s *MetadataSmartContract) AddAggregatorModelMetadata(
 	ctx contractapi.TransactionContextInterface,
 	epoch int,
-	participantIds []string,
 	modelHashCid string,
+	participantIds []string,
 ) error {
 	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{fmt.Sprintf("%d", epoch)})
 	if err != nil {
@@ -339,8 +339,8 @@ func (s *MetadataSmartContract) DeleteAggregatorModelMetadata(ctx contractapi.Tr
 func (s *MetadataSmartContract) UpdateAggregatorModelMetadata(
 	ctx contractapi.TransactionContextInterface,
 	epoch int,
-	participantIds []string,
 	modelHashCid string,
+	participantIds []string,
 ) error {
 	exists, err := s.AggregatorModelMetadataExists(ctx, epoch)
 	if err != nil {
@@ -575,4 +575,48 @@ func (s *MetadataSmartContract) GetAllParticipants(ctx contractapi.TransactionCo
 	}
 
 	return participants, nil
+}
+
+// --------------------------------------------
+// THIS SECTION DEALS WITH ACCESSING THE LOGS
+// --------------------------------------------
+
+func (s *MetadataSmartContract) GetAllLogs(ctx contractapi.TransactionContextInterface) ([]map[string]interface{}, error) {
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("", []string{})
+	if err != nil {
+		return nil, err
+	}
+
+	resultsIterator, err := ctx.GetStub().GetHistoryForKey(compositeKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get log history: %v", err)
+	}
+	defer resultsIterator.Close()
+
+	var history []map[string]interface{}
+	for resultsIterator.HasNext() {
+		modification, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var record interface{}
+		if modification.Value != nil {
+			err := json.Unmarshal(modification.Value, &record)
+			if err != nil {
+				// fallback to raw value
+				record = string(modification.Value)
+			}
+		}
+
+		entry := map[string]interface{}{
+			"TxId":      modification.TxId,
+			"Timestamp": modification.Timestamp,
+			"IsDelete":  modification.IsDelete,
+			"Value":     record,
+		}
+		history = append(history, entry)
+	}
+
+	return history, nil
 }
