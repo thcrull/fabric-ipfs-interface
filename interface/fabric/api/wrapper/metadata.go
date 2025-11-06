@@ -1,6 +1,7 @@
 package fabricclient
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -143,9 +144,12 @@ func (s *MetadataService) GetAllParticipantModelMetadataByEpoch(epoch int) ([]sh
 // AddAggregatorModelMetadata submits a transaction to add a new aggregator model metadata record
 func (s *MetadataService) AddAggregatorModelMetadata(aggregatorModelMetadata *shared.AggregatorModelMetadata) error {
 	epochStr := strconv.Itoa(aggregatorModelMetadata.Epoch)
-	var args = append([]string{epochStr, aggregatorModelMetadata.ModelHashCid}, aggregatorModelMetadata.ParticipantIds...)
+	var participantIdsJSON, err = json.Marshal(aggregatorModelMetadata.ParticipantIds)
+	if err != nil {
+		return fmt.Errorf("failed to marshal participant ids JSON: %w", err)
+	}
 
-	err := s.client.SubmitTransaction(nil, "AddAggregatorModelMetadata", args...)
+	err = s.client.SubmitTransaction(nil, "AddAggregatorModelMetadata", epochStr, aggregatorModelMetadata.ModelHashCid, string(participantIdsJSON))
 	if err != nil {
 		return fmt.Errorf("failed to add aggregator model metadata record: %w", err)
 	}
@@ -194,9 +198,12 @@ func (s *MetadataService) DeleteAggregatorModelMetadata(epoch int) error {
 // UpdateAggregatorModelMetadata updates an existing aggregator model metadata record
 func (s *MetadataService) UpdateAggregatorModelMetadata(aggregatorModelMetadata *shared.AggregatorModelMetadata) error {
 	epochStr := strconv.Itoa(aggregatorModelMetadata.Epoch)
-	var args = append([]string{epochStr, aggregatorModelMetadata.ModelHashCid}, aggregatorModelMetadata.ParticipantIds...)
+	var participantIdsJSON, err = json.Marshal(aggregatorModelMetadata.ParticipantIds)
+	if err != nil {
+		return fmt.Errorf("failed to marshal participant ids JSON: %w", err)
+	}
 
-	err := s.client.SubmitTransaction(nil, "UpdateAggregatorModelMetadata", args...)
+	err = s.client.SubmitTransaction(nil, "UpdateAggregatorModelMetadata", epochStr, aggregatorModelMetadata.ModelHashCid, string(participantIdsJSON))
 	if err != nil {
 		return fmt.Errorf("failed to update aggregator model metadata record: %w", err)
 	}

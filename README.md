@@ -9,7 +9,7 @@ This repository provides:
 
 ----------------------------------
 
-### To run the Fabtic interface example
+### To run the Fabric interface example
 All commands should be run from the root of this repository.
 
 If the fabric samples are not installed, run the following command:
