@@ -593,6 +593,7 @@ func (s *MetadataSmartContract) GetAllParticipants(ctx contractapi.TransactionCo
 // THIS SECTION DEALS WITH ACCESSING THE LOGS
 // --------------------------------------------
 
+// GetAllLogs returns the history for all objects in the world state.
 func (s *MetadataSmartContract) GetAllLogs(ctx contractapi.TransactionContextInterface) ([]map[string]interface{}, error) {
 	keys, err := s.getAllKeys(ctx)
 	if err != nil {
@@ -635,6 +636,7 @@ func (s *MetadataSmartContract) GetAllLogs(ctx contractapi.TransactionContextInt
 	return history, nil
 }
 
+// getAllKeys returns all keys of the objects in the world state.
 func (s *MetadataSmartContract) getAllKeys(ctx contractapi.TransactionContextInterface) ([]string, error) {
 	participants, err := s.GetAllParticipants(ctx)
 	if err != nil {

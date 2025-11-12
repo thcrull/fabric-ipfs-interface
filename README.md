@@ -5,7 +5,7 @@ A Go-based interface for integrating Hyperledger Fabric and IPFS into existing a
 This repository provides:
 - A **blockchain interface**: reusable utilities and abstractions to connect to a Fabric network and submit/evaluate transactions.
 - **Chaincode packages**: smart contracts specific to the research use case.
-- An **IPFS interface**: integration helpers to interact with IPFS for decentralized storage.
+- An **IPFS interface**: integration helpers to interact with IPFS for decentralised storage.
 
 ----------------------------------
 
@@ -35,7 +35,7 @@ go run main.go
 ### To run the IPFS interface example
 All commands should be run from the root of this repository.
 
-If the IPFS has not been instatiated, run the commands:
+If the IPFS has not been instantiated, run the commands:
 ```bash
 tar -xvzf kubo_v0.38.1_linux-amd64.tar.gz
 cd kubo
