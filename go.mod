@@ -3,8 +3,10 @@ module github.com/thcrull/fabric-ipfs-interface
 go 1.25.2
 
 require (
+	github.com/golang/protobuf v1.5.4
 	github.com/hyperledger/fabric-contract-api-go/v2 v2.2.0
 	github.com/hyperledger/fabric-gateway v1.9.0
+	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.7
 	github.com/ipfs/boxo v0.35.0
 	github.com/ipfs/kubo v0.38.0
 	google.golang.org/grpc v1.75.1
@@ -32,7 +34,6 @@ require (
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hyperledger/fabric-chaincode-go/v2 v2.0.0 // indirect
-	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.7 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-bitfield v1.1.0 // indirect
 	github.com/ipfs/go-block-format v0.2.3 // indirect

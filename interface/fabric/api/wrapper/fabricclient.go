@@ -1,11 +1,19 @@
 package fabricclient
 
 import (
+	"context"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
+	"fmt"
 
-	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/utils"
 	"google.golang.org/grpc"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/client"
+	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
 
 	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/config"
 )
@@ -108,4 +116,108 @@ func (c *FabricClient) Close() error {
 	}
 
 	return nil
+}
+
+func parseCert(raw []byte) (*x509.Certificate, error) {
+	if cert, err := x509.ParseCertificate(raw); err == nil {
+		return cert, nil
+	}
+	block, _ := pem.Decode(raw)
+	if block == nil {
+		return nil, fmt.Errorf("failed to parse certificate bytes")
+	}
+	return x509.ParseCertificate(block.Bytes)
+}
+
+type TxCreatorInfo struct {
+	TxID     string
+	BlockNum uint64
+	MSPID    string
+	Cert     *x509.Certificate
+}
+
+// GetTransactionCreator retrieves the creator identity of a given transaction
+// by scanning committed blocks starting at the provided block number.
+//
+// txID:       the transaction ID to search for
+// startBlock: usually 0 unless you want faster lookups
+//
+// Returns: MSP ID + parsed X.509 certificate + block number.
+func (c *FabricClient) GetTransactionCreator(ctx context.Context, txID string, startBlock uint64) (*TxCreatorInfo, error) {
+	blocks, err := c.Network.BlockEvents(ctx, client.WithStartBlock(startBlock))
+	if err != nil {
+		return nil, fmt.Errorf("failed to subscribe to block events: %w", err)
+	}
+
+	for block := range blocks {
+		if block == nil || block.Data == nil {
+			continue
+		}
+
+		for _, envBytes := range block.Data.Data {
+			// Envelope
+			env := &common.Envelope{}
+			if err := proto.Unmarshal(envBytes, env); err != nil {
+				// skip malformed envelope
+				continue
+			}
+
+			// Payload
+			payload := &common.Payload{}
+			if err := proto.Unmarshal(env.Payload, payload); err != nil {
+				continue
+			}
+
+			hdr := payload.GetHeader()
+			if hdr == nil {
+				continue
+			}
+
+			// Channel Header → txID
+			ch := &common.ChannelHeader{}
+			if err := proto.Unmarshal(hdr.GetChannelHeader(), ch); err != nil {
+				continue
+			}
+
+			if ch.GetTxId() != txID {
+				continue
+			}
+
+			// FOUND transaction → extract creator
+			sigHdrBytes := hdr.GetSignatureHeader()
+			if sigHdrBytes == nil {
+				return nil, fmt.Errorf("signature header missing for transaction %s", txID)
+			}
+
+			sigHdr := &common.SignatureHeader{}
+			if err := proto.Unmarshal(sigHdrBytes, sigHdr); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal SignatureHeader for tx %s: %w", txID, err)
+			}
+
+			creatorBytes := sigHdr.GetCreator()
+			if creatorBytes == nil {
+				return nil, fmt.Errorf("creator identity missing in SignatureHeader for %s", txID)
+			}
+
+			sid := &msp.SerializedIdentity{}
+			if err := proto.Unmarshal(creatorBytes, sid); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal SerializedIdentity: %w", err)
+			}
+
+			cert, err := parseCert(sid.IdBytes)
+			if err != nil {
+				return nil, fmt.Errorf("invalid creator certificate: %w", err)
+			}
+
+			// Return creator information
+			return &TxCreatorInfo{
+				TxID:     txID,
+				BlockNum: block.Header.Number,
+				MSPID:    sid.Mspid,
+				Cert:     cert,
+			}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("transaction %s not found", txID)
 }

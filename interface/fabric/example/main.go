@@ -297,4 +297,19 @@ func main() {
 	fmt.Println("Deleted all aggregator model metadata successfully.")
 
 	fmt.Println("All tests completed successfully.")
+
+	//ctx := context.Background()
+	//txID := "your-transaction-id-here"
+	//
+	//creator, err := client.GetTransactionCreator(ctx, txID, 0)
+	//if err != nil {
+	//	fmt.Printf("ERROR: %v\n", err)
+	//	return
+	//}
+	//
+	//fmt.Printf("Creator MSPID: %s\n", creator.MSPID)
+	//fmt.Printf("Block Number: %d\n", creator.BlockNum)
+	//fmt.Printf("Subject CN: %s\n", creator.Cert.Subject.CommonName)
+	//fmt.Printf("Issuer CN: %s\n", creator.Cert.Issuer.CommonName)
+	//fmt.Printf("Full Cert:\n%+v\n", creator.Cert)
 }

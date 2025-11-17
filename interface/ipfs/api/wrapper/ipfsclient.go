@@ -7,11 +7,11 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/ipfs/boxo/files"
 	"github.com/ipfs/boxo/path"
 	"github.com/ipfs/kubo/client/rpc"
 	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/api/config"
-	"google.golang.org/protobuf/proto"
 )
 
 // IpfsClient is a wrapper around the IPFS node HTTP API. It provides
