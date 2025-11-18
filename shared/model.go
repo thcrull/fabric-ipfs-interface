@@ -1,6 +1,8 @@
 package shared
 
-import "crypto/x509"
+import (
+	"crypto/x509"
+)
 
 // ParticipantModelMetadata represents a participant's model update's metadata.
 // Epoch - the epoch of the model update.
@@ -38,8 +40,20 @@ type Participant struct {
 // MSPID - the MSP id of the creator.
 // Cert - the creator's certificate.'
 type TxCreatorInfo struct {
-	TxID     string
-	BlockNum uint64
-	MSPID    string
-	Cert     *x509.Certificate
+	TxID     string            `json:"txId"`
+	BlockNum uint64            `json:"blockNum"`
+	MSPID    string            `json:"mspId"`
+	Cert     *x509.Certificate `json:"cert"`
+}
+
+// LogEntry holds a transaction log entry.
+// TxID - the transaction id.
+// Timestamp - the timestamp of the transaction.
+// IsDelete - whether the entry is a delete operation.
+// Value - the value of the entry. This is usually the changes made by the transaction.
+type LogEntry struct {
+	TxID      string      `json:"txId"`
+	Timestamp string      `json:"timestamp"`
+	IsDelete  bool        `json:"isDelete"`
+	Value     interface{} `json:"value"`
 }

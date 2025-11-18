@@ -316,8 +316,8 @@ func (s *MetadataService) GetAllParticipants() ([]shared.Participant, error) {
 // --------------------------------------------
 
 // GetAllLogs returns all logs from the ledger
-func (s *MetadataService) GetAllLogs() ([]map[string]interface{}, error) {
-	var history []map[string]interface{}
+func (s *MetadataService) GetAllLogs() ([]shared.LogEntry, error) {
+	var history []shared.LogEntry
 
 	err := s.client.EvaluateTransaction(&history, "GetAllLogs")
 	if err != nil {

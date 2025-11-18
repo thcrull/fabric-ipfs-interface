@@ -594,13 +594,13 @@ func (s *MetadataSmartContract) GetAllParticipants(ctx contractapi.TransactionCo
 // --------------------------------------------
 
 // GetAllLogs returns the history for all objects in the world state.
-func (s *MetadataSmartContract) GetAllLogs(ctx contractapi.TransactionContextInterface) ([]map[string]interface{}, error) {
+func (s *MetadataSmartContract) GetAllLogs(ctx contractapi.TransactionContextInterface) ([]shared.LogEntry, error) {
 	keys, err := s.getAllKeys(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var history []map[string]interface{}
+	var history []shared.LogEntry
 	for _, key := range keys {
 		resultsIterator, err := ctx.GetStub().GetHistoryForKey(key)
 		if err != nil {
@@ -623,11 +623,11 @@ func (s *MetadataSmartContract) GetAllLogs(ctx contractapi.TransactionContextInt
 				}
 			}
 
-			entry := map[string]interface{}{
-				"TxId":      modification.TxId,
-				"Timestamp": modification.Timestamp,
-				"IsDelete":  modification.IsDelete,
-				"Value":     record,
+			entry := shared.LogEntry{
+				TxID:      modification.TxId,
+				Timestamp: modification.Timestamp.String(),
+				IsDelete:  modification.IsDelete,
+				Value:     record,
 			}
 			history = append(history, entry)
 		}
