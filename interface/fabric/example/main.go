@@ -267,7 +267,7 @@ func main() {
 	fmt.Println("All logs:")
 
 	for i, logEntry := range logs {
-		fmt.Printf("Log entry %d: %+v\n\n", i, logEntry)
+		fmt.Printf("Log entry %d: %+v\n", i, logEntry)
 	}
 
 	// -------------------------------------------------------------

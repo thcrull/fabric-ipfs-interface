@@ -360,6 +360,25 @@ func (s *MetadataService) GetAllLogs() ([]shared.LogEntry, error) {
 	return history, nil
 }
 
+// GetAllLogsForUser returns all logs from the ledger tied to the user.
+// MSPID - the MSP ID of the user
+// SerialNumber - the serial number of the user
+func (s *MetadataService) GetAllLogsForUser(MSPID string, SerialNumber uint64) ([]shared.LogEntry, error) {
+	var allLogs, err = s.GetAllLogs()
+	if err != nil {
+		return nil, fmt.Errorf("failed to query all logs: %w", err)
+	}
+
+	var history []shared.LogEntry
+	for _, log := range allLogs {
+		if log.TxCreator.MSPID == MSPID && log.TxCreator.SerialNumber == SerialNumber {
+			history = append(history, log)
+		}
+	}
+
+	return history, nil
+}
+
 func (s *MetadataService) Close() error {
 	return s.client.Close()
 }

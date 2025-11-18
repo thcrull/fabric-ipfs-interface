@@ -32,7 +32,7 @@ type Participant struct {
 
 // TxCreatorInfo holds information about the creator of a transaction.
 // TxID - the transaction id.
-// MSPID - the MSP id of the creator.
+// MSPID - the MSP ID of the creator.
 // CommonName - the common name of the creator.
 // OrganizationalUnit - the organisational unit of the creator. A set of roles and memberships within the organisation.
 // SerialNumber - the serial number of the creator.
