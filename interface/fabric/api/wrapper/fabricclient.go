@@ -197,7 +197,7 @@ func (c *FabricClient) GetTransactionCreator(ctx context.Context, txID string, s
 			TxID:     txID,
 			BlockNum: block.Header.Number,
 			MSPID:    sid.Mspid,
-			Cert:     cert,
+			Cert:     *cert,
 		}, nil
 	}
 

@@ -40,20 +40,22 @@ type Participant struct {
 // MSPID - the MSP id of the creator.
 // Cert - the creator's certificate.'
 type TxCreatorInfo struct {
-	TxID     string            `json:"txId"`
-	BlockNum uint64            `json:"blockNum"`
-	MSPID    string            `json:"mspId"`
-	Cert     *x509.Certificate `json:"cert"`
+	TxID     string           `json:"txId"`
+	BlockNum uint64           `json:"blockNum"`
+	MSPID    string           `json:"mspId"`
+	Cert     x509.Certificate `json:"cert"`
 }
 
 // LogEntry holds a transaction log entry.
 // TxID - the transaction id.
+// TxCreator - information about the creator of the transaction.
 // Timestamp - the timestamp of the transaction.
 // IsDelete - whether the entry is a delete operation.
 // Value - the value of the entry. This is usually the changes made by the transaction.
 type LogEntry struct {
-	TxID      string      `json:"txId"`
-	Timestamp string      `json:"timestamp"`
-	IsDelete  bool        `json:"isDelete"`
-	Value     interface{} `json:"value"`
+	TxID      string        `json:"txId"`
+	Timestamp string        `json:"timestamp"`
+	IsDelete  bool          `json:"isDelete"`
+	Value     interface{}   `json:"value"`
+	TxCreator TxCreatorInfo `json:"txCreator"`
 }

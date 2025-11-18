@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -267,21 +266,8 @@ func main() {
 	}
 	fmt.Println("All logs:")
 
-	ctx := context.Background()
-	for _, logEntry := range logs {
-		fmt.Printf("  %+v\n", logEntry)
-		found, creator, err := client.GetTransactionCreator(ctx, logEntry.TxID, 0)
-		if err != nil {
-			fmt.Printf("ERROR: %v\n", err)
-			return
-		}
-
-		fmt.Printf("Creator Found: %v\n", found)
-		fmt.Printf("Creator MSPID: %s\n", creator.MSPID)
-		fmt.Printf("Block Number: %d\n", creator.BlockNum)
-		fmt.Printf("Subject CN: %s\n", creator.Cert.Subject.CommonName)
-		fmt.Printf("Issuer CN: %s\n", creator.Cert.Issuer.CommonName)
-		//fmt.Printf("Full Cert:\n%+v\n", creator.Cert)
+	for i, logEntry := range logs {
+		fmt.Printf("Log entry %d: %+v\n\n", i, logEntry)
 	}
 
 	// -------------------------------------------------------------

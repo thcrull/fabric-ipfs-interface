@@ -1,6 +1,7 @@
 package fabricclient
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -315,13 +316,44 @@ func (s *MetadataService) GetAllParticipants() ([]shared.Participant, error) {
 // THIS SECTION DEALS WITH ACCESSING THE LOGS
 // --------------------------------------------
 
-// GetAllLogs returns all logs from the ledger
+// GetAllLogsWithoutCreator returns all logs from the ledger without the creator information.
+// This is much faster than GetAllLogs() since it doesn't need to parse the ledger N times for the creators.
+func (s *MetadataService) GetAllLogsWithoutCreator() ([]shared.LogEntry, error) {
+	var history []shared.LogEntry
+
+	err := s.client.EvaluateTransaction(&history, "GetAllLogs")
+	if err != nil {
+		return nil, fmt.Errorf("failed to query all logs: %w", err)
+	}
+
+	return history, nil
+}
+
+// GetAllLogs returns all logs from the ledger with the creator information.
+// This might be slow for extremely large ledgers.
 func (s *MetadataService) GetAllLogs() ([]shared.LogEntry, error) {
 	var history []shared.LogEntry
 
 	err := s.client.EvaluateTransaction(&history, "GetAllLogs")
 	if err != nil {
 		return nil, fmt.Errorf("failed to query all logs: %w", err)
+	}
+
+	for i, log := range history {
+		var found, creatorInfo, err = s.client.GetTransactionCreator(context.Background(), log.TxID, 0)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get transaction creator: %w", err)
+		}
+
+		if found {
+			log.TxCreator = shared.TxCreatorInfo{
+				TxID:     creatorInfo.TxID,
+				BlockNum: creatorInfo.BlockNum,
+				MSPID:    creatorInfo.MSPID,
+				Cert:     creatorInfo.Cert,
+			}
+			history[i] = log
+		}
 	}
 
 	return history, nil
