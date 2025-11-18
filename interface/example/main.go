@@ -166,10 +166,31 @@ func main() {
 		log.Fatalf("error fetching logs from Fabric network: %v", err)
 		return
 	}
-	log.Printf("Fetched logs: %+v", history)
+	log.Printf("Fetched logs:")
+	for _, entry := range history {
+		log.Printf("%+v", entry)
+	}
+
+	//-------------------------------------
+	// 8. Clean up the networks (OPTIONAL)
+	//-------------------------------------
+
+	err = metadataService.DeleteAllAggregatorModelMetadata()
+	if err != nil {
+		log.Fatalf("error deleting aggregated model metadata from Fabric network: %v", err)
+		return
+	}
+
+	err = ipfsClient.UnpinFile(context.Background(), cid)
+	if err != nil {
+		log.Fatalf("error unpinning aggregated file from IPFS: %v", err)
+		return
+	}
+
+	log.Printf("Cleaned up the networks.")
 
 	//-------------------------------
-	// 8. Close the metadata service
+	// 9. Close the metadata service
 	//-------------------------------
 
 	if metadataService.Close() != nil {
