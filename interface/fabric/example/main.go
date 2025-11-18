@@ -299,7 +299,7 @@ func main() {
 	//fmt.Println("All tests completed successfully.")
 
 	ctx := context.Background()
-	txID := "miau"
+	txID := "20f293db6a4d0f265dcd3814c2f3d736a7f263b0172299069c2ee694b30ed610"
 
 	creator, err := client.GetTransactionCreator(ctx, txID, 0)
 	if err != nil {
