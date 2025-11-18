@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/utils"
+	"github.com/thcrull/fabric-ipfs-interface/shared"
 	"google.golang.org/grpc"
 
 	"github.com/golang/protobuf/proto"
@@ -102,6 +103,148 @@ func (c *FabricClient) EvaluateTransaction(out interface{}, name string, args ..
 	return json.Unmarshal(res, out)
 }
 
+// GetTransactionCreator retrieves the creator identity of a given transaction
+// by scanning committed blocks starting at the provided block number.
+// TxID - the transaction ID to look for.
+// StartBlock - the block number to start scanning from. Leave 0 to scan the whole ledger. Can be used for faster searching.
+func (c *FabricClient) GetTransactionCreator(ctx context.Context, txID string, startBlock uint64) (*shared.TxCreatorInfo, error) {
+	found, targetBlock, err := c.findTxBlock(ctx, txID, startBlock)
+	if err != nil {
+		return nil, err
+	}
+
+	if !found {
+		return nil, fmt.Errorf("transaction %s not found", txID)
+	}
+
+	blocks, err := c.Network.BlockEvents(ctx, client.WithStartBlock(targetBlock))
+	if err != nil {
+		return nil, fmt.Errorf("failed to subscribe to block events: %w", err)
+	}
+
+	block := <-blocks
+
+	if block == nil || block.Data == nil {
+		return nil, fmt.Errorf("block %d is corrupted", targetBlock)
+	}
+
+	for _, envBytes := range block.Data.Data {
+		// We unmarshal the data into an Envelope which is the payload wrapped around with the signature.
+		env := &common.Envelope{}
+		if err := proto.Unmarshal(envBytes, env); err != nil {
+			// skip malformed envelope
+			continue
+		}
+
+		// We unmarshal the Payload from the Envelope and get its Header.
+		payload := &common.Payload{}
+		if err := proto.Unmarshal(env.Payload, payload); err != nil {
+			continue
+		}
+
+		// This contains the metadata about the transaction, such as the creator.
+		hdr := payload.GetHeader()
+		if hdr == nil {
+			continue
+		}
+
+		// We unmarshal the ChannelHeader from the Header of the Payload.
+		// We do this to check if the transaction ID matches the one we're looking for.
+		ch := &common.ChannelHeader{}
+		if err := proto.Unmarshal(hdr.GetChannelHeader(), ch); err != nil {
+			continue
+		}
+
+		if ch.GetTxId() != txID {
+			continue
+		}
+
+		// If we are in the right transaction, we can extract the creator identity from the SignatureHeader.
+		sigHdrBytes := hdr.GetSignatureHeader()
+		if sigHdrBytes == nil {
+			return nil, fmt.Errorf("signature header missing for transaction %s", txID)
+		}
+
+		sigHdr := &common.SignatureHeader{}
+		if err := proto.Unmarshal(sigHdrBytes, sigHdr); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal SignatureHeader for tx %s: %w", txID, err)
+		}
+
+		creatorBytes := sigHdr.GetCreator()
+		if creatorBytes == nil {
+			return nil, fmt.Errorf("creator identity missing in SignatureHeader for %s", txID)
+		}
+
+		// Parse the creator identity bytes into a SerializedIdentity.
+		sid := &msp.SerializedIdentity{}
+		if err := proto.Unmarshal(creatorBytes, sid); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal SerializedIdentity: %w", err)
+		}
+
+		// Parse the certificate bytes into a certificate.
+		cert, err := parseCert(sid.IdBytes)
+		if err != nil {
+			return nil, fmt.Errorf("invalid creator certificate: %w", err)
+		}
+
+		// Return creator information
+		return &shared.TxCreatorInfo{
+			TxID:     txID,
+			BlockNum: block.Header.Number,
+			MSPID:    sid.Mspid,
+			Cert:     cert,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("transaction %s not found", txID)
+}
+
+// findTxBlock scans the ledger for the block that contains the given transaction.
+// txId - the transaction ID to look for.
+// startBlock - the block number to start scanning from. Leave 0 to scan the whole ledger. Can be used for faster searching.
+func (c *FabricClient) findTxBlock(ctx context.Context, txID string, startBlock uint64) (bool, uint64, error) {
+	// We scan filtered blocks and not normal ones because it is much faster and efficient.
+	// The filtered block and filtered transactions only contain metadata, not the entire payload.
+	filteredBlocks, err := c.Network.FilteredBlockEvents(ctx, client.WithStartBlock(startBlock))
+	if err != nil {
+		return false, 0, fmt.Errorf("failed to subscribe to filtered block events: %w", err)
+	}
+
+	var targetBlock uint64 = 0
+	var found = false
+	for filteredBlock := range filteredBlocks {
+		if filteredBlock == nil {
+			continue
+		}
+
+		for _, filteredTransaction := range filteredBlock.FilteredTransactions {
+			if filteredTransaction.Txid == txID {
+				targetBlock = filteredBlock.Number
+				found = true
+				break
+			}
+		}
+
+		if found {
+			break
+		}
+	}
+
+	return found, targetBlock, nil
+}
+
+// parseCert is a helper function that parses a certificate from its PEM representation.
+func parseCert(raw []byte) (*x509.Certificate, error) {
+	if cert, err := x509.ParseCertificate(raw); err == nil {
+		return cert, nil
+	}
+	block, _ := pem.Decode(raw)
+	if block == nil {
+		return nil, fmt.Errorf("failed to parse certificate bytes")
+	}
+	return x509.ParseCertificate(block.Bytes)
+}
+
 // Close cleans up the Client by closing the Gateway and gRPC connection.
 // Returns an error if closing any resource fails.
 func (c *FabricClient) Close() error {
@@ -116,108 +259,4 @@ func (c *FabricClient) Close() error {
 	}
 
 	return nil
-}
-
-func parseCert(raw []byte) (*x509.Certificate, error) {
-	if cert, err := x509.ParseCertificate(raw); err == nil {
-		return cert, nil
-	}
-	block, _ := pem.Decode(raw)
-	if block == nil {
-		return nil, fmt.Errorf("failed to parse certificate bytes")
-	}
-	return x509.ParseCertificate(block.Bytes)
-}
-
-type TxCreatorInfo struct {
-	TxID     string
-	BlockNum uint64
-	MSPID    string
-	Cert     *x509.Certificate
-}
-
-// GetTransactionCreator retrieves the creator identity of a given transaction
-// by scanning committed blocks starting at the provided block number.
-//
-// txID:       the transaction ID to search for
-// startBlock: usually 0 unless you want faster lookups
-//
-// Returns: MSP ID + parsed X.509 certificate + block number.
-func (c *FabricClient) GetTransactionCreator(ctx context.Context, txID string, startBlock uint64) (*TxCreatorInfo, error) {
-	blocks, err := c.Network.BlockEvents(ctx, client.WithStartBlock(startBlock))
-	if err != nil {
-		return nil, fmt.Errorf("failed to subscribe to block events: %w", err)
-	}
-
-	for block := range blocks {
-		if block == nil || block.Data == nil {
-			continue
-		}
-
-		for _, envBytes := range block.Data.Data {
-			// Envelope
-			env := &common.Envelope{}
-			if err := proto.Unmarshal(envBytes, env); err != nil {
-				// skip malformed envelope
-				continue
-			}
-
-			// Payload
-			payload := &common.Payload{}
-			if err := proto.Unmarshal(env.Payload, payload); err != nil {
-				continue
-			}
-
-			hdr := payload.GetHeader()
-			if hdr == nil {
-				continue
-			}
-
-			// Channel Header → txID
-			ch := &common.ChannelHeader{}
-			if err := proto.Unmarshal(hdr.GetChannelHeader(), ch); err != nil {
-				continue
-			}
-
-			if ch.GetTxId() != txID {
-				continue
-			}
-
-			// FOUND transaction → extract creator
-			sigHdrBytes := hdr.GetSignatureHeader()
-			if sigHdrBytes == nil {
-				return nil, fmt.Errorf("signature header missing for transaction %s", txID)
-			}
-
-			sigHdr := &common.SignatureHeader{}
-			if err := proto.Unmarshal(sigHdrBytes, sigHdr); err != nil {
-				return nil, fmt.Errorf("failed to unmarshal SignatureHeader for tx %s: %w", txID, err)
-			}
-
-			creatorBytes := sigHdr.GetCreator()
-			if creatorBytes == nil {
-				return nil, fmt.Errorf("creator identity missing in SignatureHeader for %s", txID)
-			}
-
-			sid := &msp.SerializedIdentity{}
-			if err := proto.Unmarshal(creatorBytes, sid); err != nil {
-				return nil, fmt.Errorf("failed to unmarshal SerializedIdentity: %w", err)
-			}
-
-			cert, err := parseCert(sid.IdBytes)
-			if err != nil {
-				return nil, fmt.Errorf("invalid creator certificate: %w", err)
-			}
-
-			// Return creator information
-			return &TxCreatorInfo{
-				TxID:     txID,
-				BlockNum: block.Header.Number,
-				MSPID:    sid.Mspid,
-				Cert:     cert,
-			}, nil
-		}
-	}
-
-	return nil, fmt.Errorf("transaction %s not found", txID)
 }

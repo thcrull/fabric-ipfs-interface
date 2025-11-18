@@ -1,5 +1,7 @@
 package shared
 
+import "crypto/x509"
+
 // ParticipantModelMetadata represents a participant's model update's metadata.
 // Epoch - the epoch of the model update.
 // ParticipantId - the participant's id.
@@ -28,4 +30,16 @@ type AggregatorModelMetadata struct {
 type Participant struct {
 	ParticipantId   string `json:"participant_id"`
 	EncapsulatedKey string `json:"encap_key"`
+}
+
+// TxCreatorInfo holds information about the creator of a transaction.
+// TxID - the transaction id.
+// BlockNum - the block number where the transaction was committed.
+// MSPID - the MSP id of the creator.
+// Cert - the creator's certificate.'
+type TxCreatorInfo struct {
+	TxID     string
+	BlockNum uint64
+	MSPID    string
+	Cert     *x509.Certificate
 }
