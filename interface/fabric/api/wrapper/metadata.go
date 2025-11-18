@@ -347,10 +347,11 @@ func (s *MetadataService) GetAllLogs() ([]shared.LogEntry, error) {
 
 		if found {
 			log.TxCreator = shared.TxCreatorInfo{
-				TxID:     creatorInfo.TxID,
-				BlockNum: creatorInfo.BlockNum,
-				MSPID:    creatorInfo.MSPID,
-				Cert:     creatorInfo.Cert,
+				TxID:               creatorInfo.TxID,
+				MSPID:              creatorInfo.MSPID,
+				CommonName:         creatorInfo.CommonName,
+				OrganizationalUnit: creatorInfo.OrganizationalUnit,
+				SerialNumber:       creatorInfo.SerialNumber,
 			}
 			history[i] = log
 		}

@@ -1,9 +1,5 @@
 package shared
 
-import (
-	"crypto/x509"
-)
-
 // ParticipantModelMetadata represents a participant's model update's metadata.
 // Epoch - the epoch of the model update.
 // ParticipantId - the participant's id.
@@ -36,14 +32,16 @@ type Participant struct {
 
 // TxCreatorInfo holds information about the creator of a transaction.
 // TxID - the transaction id.
-// BlockNum - the block number where the transaction was committed.
 // MSPID - the MSP id of the creator.
-// Cert - the creator's certificate.'
+// CommonName - the common name of the creator.
+// OrganizationalUnit - the organisational unit of the creator. A set of roles and memberships within the organisation.
+// SerialNumber - the serial number of the creator.
 type TxCreatorInfo struct {
-	TxID     string           `json:"txId"`
-	BlockNum uint64           `json:"blockNum"`
-	MSPID    string           `json:"mspId"`
-	Cert     x509.Certificate `json:"cert"`
+	TxID               string   `json:"txId"`
+	MSPID              string   `json:"mspId"`
+	CommonName         string   `json:"commonName"`
+	OrganizationalUnit []string `json:"organizationalUnit"`
+	SerialNumber       uint64   `json:"serialNumber"`
 }
 
 // LogEntry holds a transaction log entry.

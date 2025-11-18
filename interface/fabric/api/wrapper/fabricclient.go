@@ -194,10 +194,11 @@ func (c *FabricClient) GetTransactionCreator(ctx context.Context, txID string, s
 
 		// Return creator information
 		return true, &shared.TxCreatorInfo{
-			TxID:     txID,
-			BlockNum: block.Header.Number,
-			MSPID:    sid.Mspid,
-			Cert:     *cert,
+			TxID:               txID,
+			MSPID:              sid.Mspid,
+			CommonName:         cert.Subject.CommonName,
+			OrganizationalUnit: cert.Subject.OrganizationalUnit,
+			SerialNumber:       cert.SerialNumber.Uint64(),
 		}, nil
 	}
 
