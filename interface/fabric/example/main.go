@@ -11,6 +11,10 @@ import (
 
 // Example use case of the Fabric client wrapper used for testing all functionalities.
 func main() {
+	//--------------------------
+	// INITIALIZE FABRIC CLIENT
+	//--------------------------
+
 	// Load Fabric configuration
 	cfg, err := fabricconfig.LoadConfig("config.yaml")
 	if err != nil {
@@ -35,267 +39,303 @@ func main() {
 		log.Fatalf("Failed to create metadata service: %v", err)
 	}
 
-	// -------------------------------------------------------------
-	// SECTION 1: PARTICIPANT FUNCTIONALITIES
-	// -------------------------------------------------------------
+	//-----------------------------
+	// PARTICIPANT FUNCTIONALITIES
+	//-----------------------------
+	fmt.Println("-----Participant Functionalities-----")
 
-	fmt.Println("---- PARTICIPANT FUNCTIONALITIES ----")
-
-	// Add participant
-	err = service.AddParticipant(&shared.Participant{ParticipantId: "tom", EncapsulatedKey: "encapkey1"})
-	if err != nil {
-		log.Fatalf("Failed to add participant: %v", err)
+	var participantThomas = shared.Participant{
+		ParticipantId:   "thomas",
+		EncapsulatedKey: "key-thomas",
 	}
-	fmt.Println("Added participant successfully.")
 
-	// Get participant
-	participant, err := service.GetParticipant("tom")
-	if err != nil {
-		log.Fatalf("Failed to get participant: %v", err)
+	var participantMihnea = shared.Participant{
+		ParticipantId:   "mihnea",
+		EncapsulatedKey: "key-mihnea",
 	}
-	fmt.Printf("Retrieved participant: %+v\n", participant)
 
-	// Update participant
-	err = service.UpdateParticipant(&shared.Participant{ParticipantId: "tom", EncapsulatedKey: "encapkey2"})
-	if err != nil {
-		log.Fatalf("Failed to update participant: %v", err)
+	var participantIlinca = shared.Participant{
+		ParticipantId:   "ilinca",
+		EncapsulatedKey: "key-ilinca",
 	}
-	fmt.Println("Updated participant successfully.")
 
-	// Check participant existence
-	exists, err := service.ParticipantExists("tom")
+	err = service.AddParticipant(&participantThomas)
 	if err != nil {
-		log.Fatalf("Failed to check participant existence: %v", err)
+		log.Fatalf("Failed to add participant Thomas: %v", err)
 	}
-	fmt.Printf("Participant exists: %v\n", exists)
 
-	// Get all participants
-	allParticipants, err := service.GetAllParticipants()
+	err = service.AddParticipant(&participantMihnea)
+	if err != nil {
+		log.Fatalf("Failed to add participant Mihnea: %v", err)
+	}
+
+	err = service.AddParticipant(&participantIlinca)
+	if err != nil {
+		log.Fatalf("Failed to add participant Ilinca: %v", err)
+	}
+
+	fmt.Println("Added participants successfully.")
+
+	fetchedParticipant, err := service.GetParticipant("thomas")
+	if err != nil {
+		log.Fatalf("Failed to get participant Thomas: %v", err)
+	}
+	fmt.Printf("Fetched participant: %+v\n", fetchedParticipant)
+
+	var participantThomasUpdated = shared.Participant{
+		ParticipantId:   "thomas",
+		EncapsulatedKey: "key-thomas-updated",
+	}
+
+	err = service.UpdateParticipant(&participantThomasUpdated)
+	if err != nil {
+		log.Fatalf("Failed to update participant Thomas: %v", err)
+	}
+	fmt.Println("Updated participant Thomas successfully.")
+
+	err = service.DeleteParticipant("ilinca")
+	if err != nil {
+		log.Fatalf("Failed to delete participant Ilinca: %v", err)
+	}
+	fmt.Println("Deleted participant Ilinca successfully.")
+
+	exists, err := service.ParticipantExists("ilinca")
+	if err != nil {
+		log.Fatalf("Failed to check if participant Ilinca exists: %v", err)
+	}
+	fmt.Printf("Checked participant Ilinca's existance: %t\n", exists)
+
+	participants, err := service.GetAllParticipants()
 	if err != nil {
 		log.Fatalf("Failed to get all participants: %v", err)
 	}
-	fmt.Println("All participants:")
-	for _, p := range allParticipants {
-		fmt.Printf("  %+v\n", p)
+	fmt.Printf("Fetched all participants: %+v\n\n", participants)
+
+	//--------------------------------------------
+	// PARTICIPANT MODEL METADATA FUNCTIONALITIES
+	//--------------------------------------------
+	fmt.Println("-----Participant Model Metadata Functionalities-----")
+
+	var participantThomasModelMetadata1 = shared.ParticipantModelMetadata{
+		Epoch:           10,
+		ParticipantId:   "thomas",
+		ModelHashCid:    "thomas-model-cid",
+		HomomorphicHash: "thomas-model-homomorphic-hash",
 	}
 
-	// -------------------------------------------------------------
-	// SECTION 2: PARTICIPANT MODEL METADATA FUNCTIONALITIES
-	// -------------------------------------------------------------
+	var participantThomasModelMetadata2 = shared.ParticipantModelMetadata{
+		Epoch:           20,
+		ParticipantId:   "thomas",
+		ModelHashCid:    "thomas-model-cid",
+		HomomorphicHash: "thomas-model-homomorphic-hash",
+	}
 
-	fmt.Println("---- PARTICIPANT MODEL METADATA FUNCTIONALITIES ----")
+	var participantMihneaModelMetadata1 = shared.ParticipantModelMetadata{
+		Epoch:           10,
+		ParticipantId:   "mihnea",
+		ModelHashCid:    "mihnea-model-cid",
+		HomomorphicHash: "mihnea-model-homomorphic-hash",
+	}
 
-	// Add participant model metadata
-	err = service.AddParticipantModelMetadata(&shared.ParticipantModelMetadata{
-		Epoch:           15,
-		ParticipantId:   "tom",
-		ModelHashCid:    "modelhash1",
-		HomomorphicHash: "homhash1",
-	})
+	var participantMihneaModelMetadata2 = shared.ParticipantModelMetadata{
+		Epoch:           20,
+		ParticipantId:   "mihnea",
+		ModelHashCid:    "mihnea-model-cid",
+		HomomorphicHash: "mihnea-model-homomorphic-hash",
+	}
+
+	err = service.AddParticipantModelMetadata(&participantThomasModelMetadata1)
 	if err != nil {
-		log.Fatalf("Failed to add participant model metadata: %v", err)
+		log.Fatalf("Failed to add participant Thomas' first model metadata: %v", err)
 	}
+
+	err = service.AddParticipantModelMetadata(&participantThomasModelMetadata2)
+	if err != nil {
+		log.Fatalf("Failed to add participant Thomas' second model metadata: %v", err)
+	}
+
+	err = service.AddParticipantModelMetadata(&participantMihneaModelMetadata1)
+	if err != nil {
+		log.Fatalf("Failed to add participant Mihnea's first model metadata: %v", err)
+	}
+
+	err = service.AddParticipantModelMetadata(&participantMihneaModelMetadata2)
+	if err != nil {
+		log.Fatalf("Failed to add participant Mihnea's second model metadata: %v", err)
+	}
+
 	fmt.Println("Added participant model metadata successfully.")
 
-	// Get participant model metadata
-	pm, err := service.GetParticipantModelMetadata(15, "tom")
+	fetchedParticipantModelMetadata, err := service.GetParticipantModelMetadata(10, "mihnea")
 	if err != nil {
-		log.Fatalf("Failed to get participant model metadata: %v", err)
+		log.Fatalf("Failed to get participant Mihnea's first model metadata: %v", err)
 	}
-	fmt.Printf("Retrieved participant model metadata: %+v\n", pm)
+	fmt.Printf("Fetched participant Mihnea's first model metadata: %+v\n", fetchedParticipantModelMetadata)
 
-	// Update participant model metadata
-	err = service.UpdateParticipantModelMetadata(&shared.ParticipantModelMetadata{
-		Epoch:           15,
-		ParticipantId:   "tom",
-		ModelHashCid:    "modelhash2",
-		HomomorphicHash: "homhash2",
-	})
+	var participantMihneaModelMetadata1Updated = shared.ParticipantModelMetadata{
+		Epoch:           10,
+		ParticipantId:   "mihnea",
+		ModelHashCid:    "mihnea-model-cid-updated",
+		HomomorphicHash: "mihnea-model-homomorphic-hash-updated",
+	}
+
+	err = service.UpdateParticipantModelMetadata(&participantMihneaModelMetadata1Updated)
 	if err != nil {
-		log.Fatalf("Failed to update participant model metadata: %v", err)
+		log.Fatalf("Failed to update participant Mihnea's first model metadata: %v", err)
 	}
-	fmt.Println("Updated participant model metadata successfully.")
+	fmt.Println("Updated participant Mihnea's first model metadata successfully.")
 
-	// Add a second participant model metadata
-	err = service.AddParticipantModelMetadata(&shared.ParticipantModelMetadata{
-		Epoch:           15,
-		ParticipantId:   "tom1",
-		ModelHashCid:    "modelhash2",
-		HomomorphicHash: "homhash2",
-	})
+	err = service.DeleteParticipantModelMetadata(20, "thomas")
 	if err != nil {
-		log.Fatalf("Failed to add a second participant model metadata: %v", err)
+		log.Fatalf("Failed to delete participant Thomas's second model metadata: %v", err)
 	}
-	fmt.Println("Added a second participant model metadata successfully.")
+	fmt.Println("Deleted participant Thomas's second model metadata successfully.")
 
-	// Add a third participant model metadata
-	err = service.AddParticipantModelMetadata(&shared.ParticipantModelMetadata{
-		Epoch:           25,
-		ParticipantId:   "tom",
-		ModelHashCid:    "modelhash3",
-		HomomorphicHash: "homhash3",
-	})
+	exists, err = service.ParticipantModelMetadataExists(20, "thomas")
 	if err != nil {
-		log.Fatalf("Failed to add a third participant model metadata: %v", err)
+		log.Fatalf("Failed to check if participant Thomas's second model metadata exists: %v", err)
 	}
-	fmt.Println("Added a third participant model metadata successfully.")
+	fmt.Printf("Checked participant Thomas's second model metadata's existance: %t\n", exists)
 
-	// Get all participant model metadata
-	allPM, err := service.GetAllParticipantModelMetadata()
+	participantModelMetadataList, err := service.GetAllParticipantModelMetadata()
 	if err != nil {
-		log.Fatalf("Failed to get all participant model metadata: %v", err)
+		log.Fatalf("Failed to get all participant model metadata records: %v", err)
 	}
-	fmt.Println("All participant model metadata:")
-	for _, p := range allPM {
-		fmt.Printf("  %+v\n", p)
-	}
+	fmt.Printf("Fetched all participant model metadata records: %+v\n\n", participantModelMetadataList)
 
-	// Get participant models metadata by participant
-	pmByParticipant, err := service.GetAllParticipantModelMetadataByParticipant("tom")
+	participantModelMetadataList, err = service.GetAllParticipantModelMetadataByEpoch(10)
 	if err != nil {
-		log.Fatalf("Failed to get participant model metadata by participant: %v", err)
+		log.Fatalf("Failed to get all participant model metadata records for epoch 10: %v", err)
 	}
-	fmt.Println("Participant model metadata by participant:")
-	for _, p := range pmByParticipant {
-		fmt.Printf("  %+v\n", p)
-	}
+	fmt.Printf("Fetched all participant model metadata records for epoch 10: %+v\n\n", participantModelMetadataList)
 
-	// Get participant models metadata by epoch
-	pmByEpoch, err := service.GetAllParticipantModelMetadataByEpoch(15)
+	participantModelMetadataList, err = service.GetAllParticipantModelMetadataByParticipant("mihnea")
 	if err != nil {
-		log.Fatalf("Failed to get participant model metadata by epoch: %v", err)
+		log.Fatalf("Failed to get all participant model metadata records for participant Mihnea: %v", err)
 	}
-	fmt.Println("Participant model metadata by epoch:")
-	for _, p := range pmByEpoch {
-		fmt.Printf("  %+v\n", p)
+	fmt.Printf("Fetched all participant model metadata records for participant Mihnea: %+v\n\n", participantModelMetadataList)
+
+	//-------------------------------------------
+	// AGGREGATOR MODEL METADATA FUNCTIONALITIES
+	//-------------------------------------------
+	fmt.Println("-----Aggregator Model Metadata Functionalities-----")
+
+	var aggregatorModelMetadata1 = shared.AggregatorModelMetadata{
+		Epoch:          10,
+		ModelHashCid:   "aggregator-model-cid",
+		ParticipantIds: []string{"thomas", "mihnea"},
 	}
 
-	// Check if a record exists
-	pmExists, err := service.ParticipantModelMetadataExists(15, "tom")
-	if err != nil {
-		log.Fatalf("Failed to check if participant model metadata exists: %v", err)
-	}
-	fmt.Printf("Participant model metadata exists: %v\n", pmExists)
-
-	// Delete participant model metadata
-	err = service.DeleteParticipantModelMetadata(15, "tom")
-	if err != nil {
-		log.Fatalf("Failed to delete participant model metadata: %v", err)
-	}
-	fmt.Println("Deleted participant model metadata successfully.")
-
-	// -------------------------------------------------------------
-	// SECTION 3: AGGREGATOR MODEL METADATA FUNCTIONALITIES
-	// -------------------------------------------------------------
-
-	fmt.Println("---- AGGREGATOR MODEL METADATA FUNCTIONALITIES ----")
-
-	// Add aggregator model metadata
-	err = service.AddAggregatorModelMetadata(&shared.AggregatorModelMetadata{
+	var aggregatorModelMetadata2 = shared.AggregatorModelMetadata{
 		Epoch:          20,
-		ModelHashCid:   "aggmodelhash1",
-		ParticipantIds: []string{"tom", "tom1"},
-	})
-	if err != nil {
-		log.Fatalf("Failed to add aggregator model metadata: %v", err)
+		ModelHashCid:   "aggregator-model-cid",
+		ParticipantIds: []string{"mihnea"},
 	}
+
+	aggregationCheck, err := service.AggregationCheck(&aggregatorModelMetadata1)
+	if err != nil {
+		log.Fatalf("Failed to check aggregation: %v", err)
+	}
+	fmt.Printf("Aggregation check result: %t\n", aggregationCheck)
+
+	err = service.AddAggregatorModelMetadata(&aggregatorModelMetadata1)
+	if err != nil {
+		log.Fatalf("Failed to add the first aggregator model metadata: %v", err)
+	}
+
+	err = service.AddAggregatorModelMetadata(&aggregatorModelMetadata2)
+	if err != nil {
+		log.Fatalf("Failed to add the second aggregator model metadata: %v", err)
+	}
+
 	fmt.Println("Added aggregator model metadata successfully.")
 
-	// Get aggregator model metadata
-	am, err := service.GetAggregatorModelMetadata(20)
+	fetchedAggregatorModelMetadata, err := service.GetAggregatorModelMetadata(10)
 	if err != nil {
-		log.Fatalf("Failed to get aggregator model metadata: %v", err)
+		log.Fatalf("Failed to get the first aggregator model metadata: %v", err)
 	}
-	fmt.Printf("Retrieved aggregator model metadata: %+v\n", am)
+	fmt.Printf("Fetched the first aggregator model metadata: %+v\n", fetchedAggregatorModelMetadata)
 
-	// Update aggregator model metadata
-	err = service.UpdateAggregatorModelMetadata(&shared.AggregatorModelMetadata{
-		Epoch:          20,
-		ModelHashCid:   "aggmodelhash2",
-		ParticipantIds: []string{"tom", "tom1", "alice"},
-	})
-	if err != nil {
-		log.Fatalf("Failed to update aggregator model metadata: %v", err)
-	}
-	fmt.Println("Updated aggregator model metadata successfully.")
-
-	// Check existence
-	amExists, err := service.AggregatorModelMetadataExists(20)
-	if err != nil {
-		log.Fatalf("Failed to check aggregator model metadata existence: %v", err)
-	}
-	fmt.Printf("Aggregator model metadata exists: %v\n", amExists)
-
-	// Add a second aggregator model metadata
-	err = service.AddAggregatorModelMetadata(&shared.AggregatorModelMetadata{
-		Epoch:          30,
-		ModelHashCid:   "aggmodelhash2",
-		ParticipantIds: []string{"tom2", "tom3"},
-	})
-	if err != nil {
-		log.Fatalf("Failed to add a second aggregator model metadata: %v", err)
-	}
-	fmt.Println("Added a second aggregator model metadata successfully.")
-
-	// Get all aggregator model metadata
-	allAM, err := service.GetAllAggregatorModelMetadata()
-	if err != nil {
-		log.Fatalf("Failed to get all aggregator model metadata: %v", err)
-	}
-	fmt.Println("All aggregator model metadata:")
-	for _, a := range allAM {
-		fmt.Printf("  %+v\n", a)
+	var aggregatorModelMetadataUpdated = shared.AggregatorModelMetadata{
+		Epoch:          10,
+		ModelHashCid:   "aggregator-model-cid-updated",
+		ParticipantIds: []string{"thomas", "mihnea"},
 	}
 
-	// Delete aggregator model metadata
+	err = service.UpdateAggregatorModelMetadata(&aggregatorModelMetadataUpdated)
+	if err != nil {
+		log.Fatalf("Failed to update the first aggregator model metadata: %v", err)
+	}
+	fmt.Println("Updated the first aggregator model metadata successfully.")
+
 	err = service.DeleteAggregatorModelMetadata(20)
 	if err != nil {
-		log.Fatalf("Failed to delete aggregator model metadata: %v", err)
+		log.Fatalf("Failed to delete the second aggregator model metadata: %v", err)
 	}
-	fmt.Println("Deleted aggregator model metadata successfully.")
+	fmt.Println("Deleted the second aggregator model metadata successfully.")
 
-	// -------------------------------------------------------------
-	// SECTION 4: LOGS
-	// -------------------------------------------------------------
+	exists, err = service.AggregatorModelMetadataExists(20)
+	if err != nil {
+		log.Fatalf("Failed to check if the second aggregator model metadata exists: %v", err)
+	}
+	fmt.Printf("Checked the second aggregator model metadata's existance: %t\n", exists)
 
-	fmt.Println("---- LEDGER LOGS ----")
+	aggregatorModelMetadataList, err := service.GetAllAggregatorModelMetadata()
+	if err != nil {
+		log.Fatalf("Failed to get all aggregator model metadata records: %v", err)
+	}
+	fmt.Printf("Fetched all aggregator model metadata records: %+v\n\n", aggregatorModelMetadataList)
+
+	//-----------------------------
+	// HISTORY LOG FUNCTIONALITIES
+	//-----------------------------
+	fmt.Println("-----History Log Functionalities-----")
 
 	logs, err := service.GetAllLogs()
 	if err != nil {
 		log.Fatalf("Failed to get all logs: %v", err)
 	}
-	fmt.Println("All logs:")
+	fmt.Printf("Fetched all logs: %+v\n\n", logs)
 
-	for i, logEntry := range logs {
-		fmt.Printf("Log entry %d: %+v\n", i, logEntry)
+	logs, err = service.GetAllLogsWithoutCreator()
+	if err != nil {
+		log.Fatalf("Failed to get all logs without creator information: %v", err)
 	}
+	fmt.Printf("Fetched all logs without creator information: %+v\n\n", logs)
 
-	// -------------------------------------------------------------
+	// NOTE: THE MSPID AND SERIAL NUMBER WILL BE DIFFERENT FOR YOUR MACHINE!!!
+	logs, err = service.GetAllLogsForUser("Org1MSP", 2664457464428616324)
+	if err != nil {
+		log.Fatalf("Failed to get all logs for user: %v", err)
+	}
+	fmt.Printf("Fetched all logs for user: %+v\n\n", logs)
+
+	//---------
 	// CLEANUP
-	// -------------------------------------------------------------
+	//---------
+	fmt.Println("-----Cleanup-----")
 
-	fmt.Println("---- CLEANUP ----")
+	err = service.DeleteAllAggregatorModelMetadata()
+	if err != nil {
+		log.Fatalf("Failed to delete all aggregator model metadata records: %v", err)
+	}
+	fmt.Println("Deleted all aggregator model metadata records successfully.")
 
-	// Delete all participants
+	err = service.DeleteAllParticipantModelMetadata()
+	if err != nil {
+		log.Fatalf("Failed to delete all participant model metadata records: %v", err)
+	}
+	fmt.Println("Deleted all participant model metadata records successfully.")
+
 	err = service.DeleteAllParticipants()
 	if err != nil {
 		log.Fatalf("Failed to delete all participants: %v", err)
 	}
 	fmt.Println("Deleted all participants successfully.")
 
-	// Delete all participant model metadata
-	err = service.DeleteAllParticipantModelMetadata()
+	err = service.Close()
 	if err != nil {
-		log.Fatalf("Failed to delete all participant model metadata: %v", err)
+		log.Fatalf("Failed to close Fabric client: %v", err)
 	}
-	fmt.Println("Deleted all participant model metadata successfully.")
-
-	// Delete all aggregator model metadata
-	err = service.DeleteAllAggregatorModelMetadata()
-	if err != nil {
-		log.Fatalf("Failed to delete all aggregator model metadata: %v", err)
-	}
-	fmt.Println("Deleted all aggregator model metadata successfully.")
-
-	fmt.Println("All tests completed successfully.")
+	fmt.Println("Closed Fabric client successfully.")
 }
