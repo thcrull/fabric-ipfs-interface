@@ -142,8 +142,33 @@ func (s *MetadataService) GetAllParticipantModelMetadataByEpoch(epoch int) ([]sh
 // THIS SECTION IS FOR THE AGGREGATOR MODEL METADATA RECORDS' FUNCTIONALITIES
 // ---------------------------------------------------------------------------
 
+// AggregationCheck checks if all participants have submitted their model metadata records for the epoch that the aggregator is responsible for.
+func (s *MetadataService) AggregationCheck(aggregatorModelMetadata *shared.AggregatorModelMetadata) (bool, error) {
+	for _, participantId := range aggregatorModelMetadata.ParticipantIds {
+		found, err := s.ParticipantModelMetadataExists(aggregatorModelMetadata.Epoch, participantId)
+		if err != nil {
+			return false, fmt.Errorf("failed to check if participant model metadata exists: %w", err)
+		}
+
+		if !found {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
 // AddAggregatorModelMetadata submits a transaction to add a new aggregator model metadata record
 func (s *MetadataService) AddAggregatorModelMetadata(aggregatorModelMetadata *shared.AggregatorModelMetadata) error {
+	check, checkErr := s.AggregationCheck(aggregatorModelMetadata)
+	if checkErr != nil {
+		return fmt.Errorf("failed to check if the participants of the aggregation uploaded their models: %w", checkErr)
+	}
+
+	if check == false {
+		return fmt.Errorf("aggregation submission denied, not all participants have submitted their model metadata records")
+	}
+
 	epochStr := strconv.Itoa(aggregatorModelMetadata.Epoch)
 	var participantIdsJSON, err = json.Marshal(aggregatorModelMetadata.ParticipantIds)
 	if err != nil {
@@ -198,6 +223,15 @@ func (s *MetadataService) DeleteAggregatorModelMetadata(epoch int) error {
 
 // UpdateAggregatorModelMetadata updates an existing aggregator model metadata record
 func (s *MetadataService) UpdateAggregatorModelMetadata(aggregatorModelMetadata *shared.AggregatorModelMetadata) error {
+	check, checkErr := s.AggregationCheck(aggregatorModelMetadata)
+	if checkErr != nil {
+		return fmt.Errorf("failed to check if the participants of the aggregation uploaded their models: %w", checkErr)
+	}
+
+	if check == false {
+		return fmt.Errorf("aggregation update denied, not all participants have submitted their model metadata records")
+	}
+
 	epochStr := strconv.Itoa(aggregatorModelMetadata.Epoch)
 	var participantIdsJSON, err = json.Marshal(aggregatorModelMetadata.ParticipantIds)
 	if err != nil {
@@ -379,6 +413,7 @@ func (s *MetadataService) GetAllLogsForUser(MSPID string, SerialNumber uint64) (
 	return history, nil
 }
 
+// Close closes the Fabric client
 func (s *MetadataService) Close() error {
 	return s.client.Close()
 }
