@@ -1,13 +1,24 @@
 # Fabric and IPFS Interface
 
-A Go-based interface for integrating Hyperledger Fabric and IPFS into existing applications.
+A Go-based interface for integrating Hyperledger Fabric and IPFS into existing applications. 
+This repository is specifically designed for a research use case.
 
 This repository provides:
 - A **blockchain interface**: reusable utilities and abstractions to connect to a Fabric network and submit/evaluate transactions.
-- **Chaincode packages**: smart contracts specific to the research use case.
+- **Chaincode packages**: smart contracts specific to a research use case.
 - An **IPFS interface**: integration helpers to interact with IPFS for decentralised storage.
 
 ----------------------------------
+
+## Running the examples
+
+It is recommended to reset the fabric network before running an example.
+You can use the following command to reset it:
+
+```bash
+cd fabric-samples/test-network
+./network.sh down
+```
 
 ### To run the Fabric interface example
 All commands should be run from the root of this repository.
