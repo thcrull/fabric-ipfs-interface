@@ -111,24 +111,8 @@ func main() {
 	}
 	log.Printf("Fetched weight model: %+v", fetchedWeightModel.Values)
 
-	//--------------------------------------------------------------------------------------------------
-	// 5. Unpin the CID from the IPFS and delete the participant model metadata from the Fabric network
-	//--------------------------------------------------------------------------------------------------
-
-	if ipfsClient.UnpinFile(context.Background(), participantModelMetadata.ModelHashCid) != nil {
-		log.Fatalf("error unpinning file from IPFS: %v", err)
-		return
-	}
-	log.Printf("Unpinned file with CID: %s", participantModelMetadata.ModelHashCid)
-
-	if metadataService.DeleteParticipantModelMetadata(1, "tom") != nil {
-		log.Fatalf("error deleting metadata from Fabric network: %v", err)
-		return
-	}
-	log.Printf("Deleted metadata successfully.")
-
 	//------------------------------------------------------------------------------------------------------------
-	// 6. Add an aggregated weight model to the IPFS network and the metadata to the Fabric network as an Aggregator
+	// 5. Add an aggregated weight model to the IPFS network and the metadata to the Fabric network as an Aggregator
 	//------------------------------------------------------------------------------------------------------------
 
 	aggregatedWeightModel := &pb.WeightModel{
@@ -153,6 +137,22 @@ func main() {
 		return
 	}
 	log.Printf("Added aggregated model metadata successfully.")
+
+	//--------------------------------------------------------------------------------------------------
+	// 6. Unpin the CID from the IPFS and delete the participant model metadata from the Fabric network
+	//--------------------------------------------------------------------------------------------------
+
+	if ipfsClient.UnpinFile(context.Background(), participantModelMetadata.ModelHashCid) != nil {
+		log.Fatalf("error unpinning file from IPFS: %v", err)
+		return
+	}
+	log.Printf("Unpinned file with CID: %s", participantModelMetadata.ModelHashCid)
+
+	if metadataService.DeleteParticipantModelMetadata(1, "tom") != nil {
+		log.Fatalf("error deleting metadata from Fabric network: %v", err)
+		return
+	}
+	log.Printf("Deleted metadata successfully.")
 
 	// Deleting and unpinning the aggregated model metadata from
 	// the Fabric and IPFS networks is similar to the steps from 5.
