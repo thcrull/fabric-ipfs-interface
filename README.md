@@ -8,6 +8,10 @@ This repository provides:
 - **Chaincode packages**: smart contracts specific to a research use case.
 - An **IPFS interface**: integration helpers to interact with IPFS for decentralised storage.
 
+The repository also provides extensive examples of how to use the blockchain interface and IPFS interface. 
+They walk you through all functions in the wrappers.
+There is also a general example application that showcases the basic functionalities we expect you to use (IPFS and Fabric).
+
 ----------------------------------
 
 ## Running the examples
