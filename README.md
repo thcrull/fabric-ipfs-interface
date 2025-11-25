@@ -12,12 +12,19 @@ The repository also provides extensive examples of how to use the blockchain int
 They walk you through all functions in the wrappers.
 There is also a general example application that showcases the basic functionalities we expect you to use (IPFS and Fabric).
 
+IMPORTANT: Make sure to copy the contents of the
+`/chaincode/metadata/chaincode.go` file into the file `/fabric-samples/asset-transfer-basic/chaincode-go/chaincode/smartcontract.go`
+before running the examples or your own application. This is how you override the template chaincode with the repository chaincode.
+
+
 ----------------------------------
 
 ## Running the examples
 
 It is recommended to reset the fabric network before running an example.
 You can use the following command to reset it:
+
+----------------------------------
 
 ```bash
 cd fabric-samples/test-network
