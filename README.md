@@ -24,12 +24,12 @@ before running the examples or your own application. This is how you override th
 It is recommended to reset the fabric network before running an example.
 You can use the following command to reset it:
 
-----------------------------------
-
 ```bash
 cd fabric-samples/test-network
 ./network.sh down
 ```
+
+----------------------------------
 
 ### To run the Fabric interface example
 All commands should be run from the root of this repository.

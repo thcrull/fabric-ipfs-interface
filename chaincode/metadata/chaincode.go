@@ -432,6 +432,9 @@ func (s *MetadataSmartContract) AddParticipant(
 	ctx contractapi.TransactionContextInterface,
 	participantId string,
 	encapsulatedKey string,
+	HomomorphicSharedKeyCypher string,
+	ParticipantCommunicationKeyCypher string,
+	AggregatorCommunicationKeyCypher string,
 ) error {
 	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{participantId})
 	if err != nil {
@@ -447,8 +450,11 @@ func (s *MetadataSmartContract) AddParticipant(
 	}
 
 	participant := shared.Participant{
-		ParticipantId:   participantId,
-		EncapsulatedKey: encapsulatedKey,
+		ParticipantId:                     participantId,
+		EncapsulatedKey:                   encapsulatedKey,
+		HomomorphicSharedKeyCypher:        HomomorphicSharedKeyCypher,
+		ParticipantCommunicationKeyCypher: ParticipantCommunicationKeyCypher,
+		AggregatorCommunicationKeyCypher:  AggregatorCommunicationKeyCypher,
 	}
 	participantJSON, err := json.Marshal(participant)
 	if err != nil {
@@ -520,6 +526,9 @@ func (s *MetadataSmartContract) UpdateParticipant(
 	ctx contractapi.TransactionContextInterface,
 	participantId string,
 	encapsulatedKey string,
+	HomomorphicSharedKeyCypher string,
+	ParticipantCommunicationKeyCypher string,
+	AggregatorCommunicationKeyCypher string,
 ) error {
 	exists, err := s.ParticipantExists(ctx, participantId)
 	if err != nil {
@@ -531,8 +540,11 @@ func (s *MetadataSmartContract) UpdateParticipant(
 
 	// overwriting original participant with new participant
 	participant := shared.Participant{
-		ParticipantId:   participantId,
-		EncapsulatedKey: encapsulatedKey,
+		ParticipantId:                     participantId,
+		EncapsulatedKey:                   encapsulatedKey,
+		HomomorphicSharedKeyCypher:        HomomorphicSharedKeyCypher,
+		ParticipantCommunicationKeyCypher: ParticipantCommunicationKeyCypher,
+		AggregatorCommunicationKeyCypher:  AggregatorCommunicationKeyCypher,
 	}
 	participantJSON, err := json.Marshal(participant)
 	if err != nil {

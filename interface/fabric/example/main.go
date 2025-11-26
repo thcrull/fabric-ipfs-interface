@@ -45,18 +45,27 @@ func main() {
 	fmt.Println("-----Participant Functionalities-----")
 
 	var participantThomas = shared.Participant{
-		ParticipantId:   "thomas",
-		EncapsulatedKey: "key-thomas",
+		ParticipantId:                     "thomas",
+		EncapsulatedKey:                   "key-thomas",
+		HomomorphicSharedKeyCypher:        "key-thomas-homomorphic-shared-key-cypher",
+		ParticipantCommunicationKeyCypher: "key-thomas-participant-communication-key-cypher",
+		AggregatorCommunicationKeyCypher:  "key-thomas-aggregator-communication-key-cypher",
 	}
 
 	var participantMihnea = shared.Participant{
-		ParticipantId:   "mihnea",
-		EncapsulatedKey: "key-mihnea",
+		ParticipantId:                     "mihnea",
+		EncapsulatedKey:                   "key-mihnea",
+		HomomorphicSharedKeyCypher:        "key-mihnea-homomorphic-shared-key-cypher",
+		ParticipantCommunicationKeyCypher: "key-mihnea-participant-communication-key-cypher",
+		AggregatorCommunicationKeyCypher:  "key-mihnea-aggregator-communication-key-cypher",
 	}
 
 	var participantIlinca = shared.Participant{
-		ParticipantId:   "ilinca",
-		EncapsulatedKey: "key-ilinca",
+		ParticipantId:                     "ilinca",
+		EncapsulatedKey:                   "key-ilinca",
+		HomomorphicSharedKeyCypher:        "key-ilinca-homomorphic-shared-key-cypher",
+		ParticipantCommunicationKeyCypher: "key-ilinca-participant-communication-key-cypher",
+		AggregatorCommunicationKeyCypher:  "key-ilinca-aggregator-communication-key-cypher",
 	}
 
 	err = service.AddParticipant(&participantThomas)
@@ -83,8 +92,11 @@ func main() {
 	fmt.Printf("Fetched participant: %+v\n", fetchedParticipant)
 
 	var participantThomasUpdated = shared.Participant{
-		ParticipantId:   "thomas",
-		EncapsulatedKey: "key-thomas-updated",
+		ParticipantId:                     "thomas",
+		EncapsulatedKey:                   "key-thomas-updated",
+		HomomorphicSharedKeyCypher:        "key-thomas-homomorphic-shared-key-cypher-updated",
+		ParticipantCommunicationKeyCypher: "key-thomas-participant-communication-key-cypher-updated",
+		AggregatorCommunicationKeyCypher:  "key-thomas-aggregator-communication-key-cypher-updated",
 	}
 
 	err = service.UpdateParticipant(&participantThomasUpdated)
@@ -232,11 +244,11 @@ func main() {
 		ParticipantIds: []string{"mihnea"},
 	}
 
-	aggregationCheck, err := service.AggregationCheck(&aggregatorModelMetadata1)
+	err = service.AggregationCheck(&aggregatorModelMetadata1)
 	if err != nil {
-		log.Fatalf("Failed to check aggregation: %v", err)
+		log.Fatalf("Aggregation check result: %v", err)
 	}
-	fmt.Printf("Aggregation check result: %t\n", aggregationCheck)
+	fmt.Printf("Aggregation check succeded.")
 
 	err = service.AddAggregatorModelMetadata(&aggregatorModelMetadata1)
 	if err != nil {
