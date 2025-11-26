@@ -27,10 +27,15 @@ type AggregatorModelMetadata struct {
 // Participant holds participant's information.
 // ParticipantId - the participant's id.
 // EncapsulatedKey - the participant's encapsulated key.
+// HomomorphicSharedKeyCypher - the homomorphic shared key cypher. This key can be retrieved using the decapsulated key, and it is used to encrypt the model update.
+// ParticipantCommunicationKeyCypher - the participant's communication key cypher. This key is used to encrypt the messages exchanged between the participant and the aggregator.
+// ParticipantCommunicationKeyCypher - the aggregator's communication key cypher. This key is used to encrypt the messages exchanged between the participant and the aggregator.
 type Participant struct {
-	ParticipantId   string `json:"participant_id"`
-	EncapsulatedKey string `json:"encap_key"`
-	// 2. add Homomorphic encryption key share cypher (this is used to encrypt the model update)
+	ParticipantId                     string `json:"participant_id"`
+	EncapsulatedKey                   string `json:"encap_key"`
+	HomomorphicSharedKeyCypher        string `json:"homomorphic_key_cypher"`
+	ParticipantCommunicationKeyCypher string `json:"participant_comm_key_cypher"`
+	AggregatorCommunicationKeyCypher  string `json:"aggregator_comm_key_cypher"`
 }
 
 // TxCreatorInfo holds information about the creator of a transaction.

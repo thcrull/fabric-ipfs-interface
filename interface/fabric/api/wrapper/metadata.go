@@ -142,32 +142,32 @@ func (s *MetadataService) GetAllParticipantModelMetadataByEpoch(epoch int) ([]sh
 // THIS SECTION IS FOR THE AGGREGATOR MODEL METADATA RECORDS' FUNCTIONALITIES
 // ---------------------------------------------------------------------------
 
-// 3. Add who didn't upload yet.
 // AggregationCheck checks if all participants have submitted their model metadata records for the epoch that the aggregator is responsible for.
-func (s *MetadataService) AggregationCheck(aggregatorModelMetadata *shared.AggregatorModelMetadata) (bool, error) {
+func (s *MetadataService) AggregationCheck(aggregatorModelMetadata *shared.AggregatorModelMetadata) error {
+	var missingParticipantIds []string
 	for _, participantId := range aggregatorModelMetadata.ParticipantIds {
 		found, err := s.ParticipantModelMetadataExists(aggregatorModelMetadata.Epoch, participantId)
 		if err != nil {
-			return false, fmt.Errorf("failed to check if participant model metadata exists: %w", err)
+			return fmt.Errorf("failed to check if participant model metadata exists: %w", err)
 		}
 
 		if !found {
-			return false, nil
+			missingParticipantIds = append(missingParticipantIds, participantId)
 		}
 	}
 
-	return true, nil
+	if len(missingParticipantIds) == 0 {
+		return nil
+	} else {
+		return fmt.Errorf("aggregation denied, participant(s) %v did not upload their model metadata records", missingParticipantIds)
+	}
 }
 
 // AddAggregatorModelMetadata submits a transaction to add a new aggregator model metadata record
 func (s *MetadataService) AddAggregatorModelMetadata(aggregatorModelMetadata *shared.AggregatorModelMetadata) error {
-	check, checkErr := s.AggregationCheck(aggregatorModelMetadata)
+	checkErr := s.AggregationCheck(aggregatorModelMetadata)
 	if checkErr != nil {
-		return fmt.Errorf("failed to check if the participants of the aggregation uploaded their models: %w", checkErr)
-	}
-
-	if check == false {
-		return fmt.Errorf("aggregation submission denied, not all participants have submitted their model metadata records")
+		return fmt.Errorf("aggregation check failed: %w", checkErr)
 	}
 
 	epochStr := strconv.Itoa(aggregatorModelMetadata.Epoch)
@@ -224,13 +224,9 @@ func (s *MetadataService) DeleteAggregatorModelMetadata(epoch int) error {
 
 // UpdateAggregatorModelMetadata updates an existing aggregator model metadata record
 func (s *MetadataService) UpdateAggregatorModelMetadata(aggregatorModelMetadata *shared.AggregatorModelMetadata) error {
-	check, checkErr := s.AggregationCheck(aggregatorModelMetadata)
+	checkErr := s.AggregationCheck(aggregatorModelMetadata)
 	if checkErr != nil {
-		return fmt.Errorf("failed to check if the participants of the aggregation uploaded their models: %w", checkErr)
-	}
-
-	if check == false {
-		return fmt.Errorf("aggregation update denied, not all participants have submitted their model metadata records")
+		return fmt.Errorf("aggregation check failed: %w", checkErr)
 	}
 
 	epochStr := strconv.Itoa(aggregatorModelMetadata.Epoch)
@@ -274,7 +270,7 @@ func (s *MetadataService) GetAllAggregatorModelMetadata() ([]shared.AggregatorMo
 
 // AddParticipant submits a transaction to add a new participant record
 func (s *MetadataService) AddParticipant(participant *shared.Participant) error {
-	err := s.client.SubmitTransaction(nil, "AddParticipant", participant.ParticipantId, participant.EncapsulatedKey)
+	err := s.client.SubmitTransaction(nil, "AddParticipant", participant.ParticipantId, participant.EncapsulatedKey, participant.HomomorphicSharedKeyCypher, participant.ParticipantCommunicationKeyCypher, participant.AggregatorCommunicationKeyCypher)
 	if err != nil {
 		return fmt.Errorf("failed to add participant record: %w", err)
 	}
@@ -318,7 +314,7 @@ func (s *MetadataService) DeleteParticipant(participantId string) error {
 
 // UpdateParticipant updates a existing participant record
 func (s *MetadataService) UpdateParticipant(participant *shared.Participant) error {
-	err := s.client.SubmitTransaction(nil, "UpdateParticipant", participant.ParticipantId, participant.EncapsulatedKey)
+	err := s.client.SubmitTransaction(nil, "UpdateParticipant", participant.ParticipantId, participant.EncapsulatedKey, participant.HomomorphicSharedKeyCypher, participant.ParticipantCommunicationKeyCypher, participant.AggregatorCommunicationKeyCypher)
 	if err != nil {
 		return fmt.Errorf("failed to update participant record: %w", err)
 	}
