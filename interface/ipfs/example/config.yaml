@@ -1,0 +1,2 @@
+ipfs:
+  node_path: "http://localhost:5001"

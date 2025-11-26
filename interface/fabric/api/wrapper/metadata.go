@@ -142,6 +142,7 @@ func (s *MetadataService) GetAllParticipantModelMetadataByEpoch(epoch int) ([]sh
 // THIS SECTION IS FOR THE AGGREGATOR MODEL METADATA RECORDS' FUNCTIONALITIES
 // ---------------------------------------------------------------------------
 
+// 3. Add who didn't upload yet.
 // AggregationCheck checks if all participants have submitted their model metadata records for the epoch that the aggregator is responsible for.
 func (s *MetadataService) AggregationCheck(aggregatorModelMetadata *shared.AggregatorModelMetadata) (bool, error) {
 	for _, participantId := range aggregatorModelMetadata.ParticipantIds {

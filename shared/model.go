@@ -22,12 +22,15 @@ type AggregatorModelMetadata struct {
 	ModelHashCid   string   `json:"model_hash_cid"`
 }
 
+// 1. Add a cypher for the key used between aggregator and participants.
+
 // Participant holds participant's information.
 // ParticipantId - the participant's id.
 // EncapsulatedKey - the participant's encapsulated key.
 type Participant struct {
 	ParticipantId   string `json:"participant_id"`
 	EncapsulatedKey string `json:"encap_key"`
+	// 2. add Homomorphic encryption key share cypher (this is used to encrypt the model update)
 }
 
 // TxCreatorInfo holds information about the creator of a transaction.
