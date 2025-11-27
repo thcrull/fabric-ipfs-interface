@@ -177,20 +177,14 @@ func (s *MetadataSmartContract) DeleteAllParticipants(ctx contractapi.Transactio
 	}
 
 	for _, participant := range participants {
-		exists, err := s.ParticipantExists(ctx, participant.ParticipantId)
+		compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{participant.ParticipantId})
 		if err != nil {
-			return fmt.Errorf("error checking if participant exists: %v", err)
+			return fmt.Errorf("failed creating composite key: %v", err)
 		}
-		if exists {
-			compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{participant.ParticipantId})
-			if err != nil {
-				return fmt.Errorf("failed creating composite key: %v", err)
-			}
 
-			err = ctx.GetStub().DelState(compositeKey)
-			if err != nil {
-				return fmt.Errorf("error deleting participant record: %v", err)
-			}
+		err = ctx.GetStub().DelState(compositeKey)
+		if err != nil {
+			return fmt.Errorf("error deleting participant record: %v", err)
 		}
 	}
 
@@ -374,20 +368,14 @@ func (s *MetadataSmartContract) DeleteAllAggregators(ctx contractapi.Transaction
 	}
 
 	for _, aggregator := range aggregators {
-		exists, err := s.AggregatorExists(ctx, aggregator.AggregatorId)
+		compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{aggregator.AggregatorId})
 		if err != nil {
-			return fmt.Errorf("error checking if aggregator exists: %v", err)
+			return fmt.Errorf("failed creating composite key: %v", err)
 		}
-		if exists {
-			compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{aggregator.AggregatorId})
-			if err != nil {
-				return fmt.Errorf("failed creating composite key: %v", err)
-			}
 
-			err = ctx.GetStub().DelState(compositeKey)
-			if err != nil {
-				return fmt.Errorf("error deleting aggregator record: %v", err)
-			}
+		err = ctx.GetStub().DelState(compositeKey)
+		if err != nil {
+			return fmt.Errorf("error deleting aggregator record: %v", err)
 		}
 	}
 
@@ -588,20 +576,14 @@ func (s *MetadataSmartContract) DeleteAllParticipantModelMetadata(ctx contractap
 	}
 
 	for _, participantModelMetadataBlock := range participantModelMetadataBlocks {
-		exists, err := s.ParticipantModelMetadataExists(ctx, participantModelMetadataBlock.Epoch, participantModelMetadataBlock.ParticipantId)
+		compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{participantModelMetadataBlock.ParticipantId, fmt.Sprintf("%d", participantModelMetadataBlock.Epoch)})
 		if err != nil {
-			return fmt.Errorf("error checking if participant model metadata record exists: %v", err)
+			return fmt.Errorf("failed creating composite key: %v", err)
 		}
-		if exists {
-			compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{participantModelMetadataBlock.ParticipantId, fmt.Sprintf("%d", participantModelMetadataBlock.Epoch)})
-			if err != nil {
-				return fmt.Errorf("failed creating composite key: %v", err)
-			}
 
-			err = ctx.GetStub().DelState(compositeKey)
-			if err != nil {
-				return fmt.Errorf("error deleting participant model metadata record: %v", err)
-			}
+		err = ctx.GetStub().DelState(compositeKey)
+		if err != nil {
+			return fmt.Errorf("error deleting participant model metadata record: %v", err)
 		}
 	}
 
@@ -692,23 +674,27 @@ func (s *MetadataSmartContract) GetAllParticipantModelMetadataByEpoch(ctx contra
 
 // aggregationCheck checks if all participants have submitted their model metadata records for the epoch that the aggregator is responsible for.
 func (s *MetadataSmartContract) aggregationCheck(ctx contractapi.TransactionContextInterface, aggregatorModelMetadata *shared.AggregatorModelMetadata) error {
-	var missingParticipantIds []string
+	var missing []string
 	for _, participantId := range aggregatorModelMetadata.ParticipantIds {
-		found, err := s.ParticipantModelMetadataExists(ctx, aggregatorModelMetadata.Epoch, participantId)
+		key, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata",
+			[]string{participantId, fmt.Sprintf("%d", aggregatorModelMetadata.Epoch)})
 		if err != nil {
-			return fmt.Errorf("failed to check if participant model metadata exists: %w", err)
+			return err
 		}
 
-		if !found {
-			missingParticipantIds = append(missingParticipantIds, participantId)
+		state, err := ctx.GetStub().GetState(key)
+		if err != nil {
+			return err
+		}
+		if state == nil {
+			missing = append(missing, participantId)
 		}
 	}
 
-	if len(missingParticipantIds) == 0 {
-		return nil
-	} else {
-		return fmt.Errorf("aggregation denied, participant(s) %v did not upload their model metadata records", missingParticipantIds)
+	if len(missing) > 0 {
+		return fmt.Errorf("aggregation denied, missing model metadata from: %v", missing)
 	}
+	return nil
 }
 
 // AddAggregatorModelMetadata issues a new aggregator's model aggregation metadata record to the world state with the given details.
@@ -900,20 +886,14 @@ func (s *MetadataSmartContract) DeleteAllAggregatorModelMetadata(ctx contractapi
 	}
 
 	for _, aggregatorModelMetadataBlock := range aggregatorModelMetadataBlocks {
-		exists, err := s.AggregatorModelMetadataExists(ctx, aggregatorModelMetadataBlock.Epoch, aggregatorModelMetadataBlock.AggregatorId)
+		compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{aggregatorModelMetadataBlock.AggregatorId, fmt.Sprintf("%d", aggregatorModelMetadataBlock.Epoch)})
 		if err != nil {
-			return fmt.Errorf("error checking if aggregator model metadata record exists: %v", err)
+			return fmt.Errorf("failed creating composite key: %v", err)
 		}
-		if exists {
-			compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{aggregatorModelMetadataBlock.AggregatorId, fmt.Sprintf("%d", aggregatorModelMetadataBlock.Epoch)})
-			if err != nil {
-				return fmt.Errorf("failed creating composite key: %v", err)
-			}
 
-			err = ctx.GetStub().DelState(compositeKey)
-			if err != nil {
-				return fmt.Errorf("error deleting aggregator model metadata record: %v", err)
-			}
+		err = ctx.GetStub().DelState(compositeKey)
+		if err != nil {
+			return fmt.Errorf("error deleting aggregator model metadata record: %v", err)
 		}
 	}
 
@@ -979,6 +959,11 @@ func (s *MetadataSmartContract) GetAllAggregatorModelMetadataByAggregator(ctx co
 
 // GetAllLogs returns the history for all objects in the world state.
 func (s *MetadataSmartContract) GetAllLogs(ctx contractapi.TransactionContextInterface) ([]shared.LogEntry, error) {
+	err := adminCheck(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("permission denied: %v", err)
+	}
+
 	keys, err := s.getAllKeys(ctx)
 	if err != nil {
 		return nil, err
@@ -1024,57 +1009,25 @@ func (s *MetadataSmartContract) GetAllLogs(ctx contractapi.TransactionContextInt
 
 // getAllKeys returns all keys of the objects in the world state.
 func (s *MetadataSmartContract) getAllKeys(ctx contractapi.TransactionContextInterface) ([]string, error) {
-	participants, err := s.GetAllParticipants(ctx)
+	err := adminCheck(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("permission denied: %v", err)
 	}
 
-	aggregators, err := s.GetAllAggregators(ctx)
+	iterator, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
 		return nil, err
 	}
-
-	participantModelMetadata, err := s.GetAllParticipantModelMetadata(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	aggregatorModelMetadata, err := s.GetAllAggregatorModelMetadata(ctx)
-	if err != nil {
-		return nil, err
-	}
+	defer iterator.Close()
 
 	var keys []string
-	for _, participant := range participants {
-		compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{participant.ParticipantId})
+	for iterator.HasNext() {
+		kv, err := iterator.Next()
 		if err != nil {
-			return nil, fmt.Errorf("failed creating composite key: %v", err)
+			return nil, err
 		}
-		keys = append(keys, compositeKey)
-	}
 
-	for _, aggregator := range aggregators {
-		compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{aggregator.AggregatorId})
-		if err != nil {
-			return nil, fmt.Errorf("failed creating composite key: %v", err)
-		}
-		keys = append(keys, compositeKey)
-	}
-
-	for _, participantMetadata := range participantModelMetadata {
-		compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{participantMetadata.ParticipantId, fmt.Sprintf("%d", participantMetadata.Epoch)})
-		if err != nil {
-			return nil, fmt.Errorf("failed creating composite key: %v", err)
-		}
-		keys = append(keys, compositeKey)
-	}
-
-	for _, aggregatorMetadata := range aggregatorModelMetadata {
-		compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{aggregatorMetadata.AggregatorId, fmt.Sprintf("%d", aggregatorMetadata.Epoch)})
-		if err != nil {
-			return nil, fmt.Errorf("failed creating composite key: %v", err)
-		}
-		keys = append(keys, compositeKey)
+		keys = append(keys, kv.Key)
 	}
 
 	return keys, nil
