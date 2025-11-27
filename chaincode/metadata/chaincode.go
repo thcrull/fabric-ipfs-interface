@@ -227,7 +227,7 @@ func (s *MetadataSmartContract) GetAllParticipants(ctx contractapi.TransactionCo
 // ------------------------------------------------
 
 // AddAggregator issues a new aggregator record to the world state with the given details.
-func (s *MetadataSmartContract) AddAggregator(ctx contractapi.TransactionContextInterface, communicationKeysCyphers map[string]string) error {
+func (s *MetadataSmartContract) AddAggregator(ctx contractapi.TransactionContextInterface, communicationKeysCyphersJSON string) error {
 	MSPID, serialNumber, err := getCreatorInfo(ctx)
 	if err != nil {
 		return fmt.Errorf("failed getting creator info: %v", err)
@@ -245,6 +245,12 @@ func (s *MetadataSmartContract) AddAggregator(ctx contractapi.TransactionContext
 	}
 	if exists {
 		return fmt.Errorf("the aggregator record for id %s already exists", aggregatorId)
+	}
+
+	var communicationKeysCyphers map[string]string
+	err = json.Unmarshal([]byte(communicationKeysCyphersJSON), &communicationKeysCyphers)
+	if err != nil {
+		return fmt.Errorf("failed unmarshaling communication keys cyphers: %v", err)
 	}
 
 	aggregator := shared.Aggregator{
