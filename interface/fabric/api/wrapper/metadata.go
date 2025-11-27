@@ -109,8 +109,89 @@ func (s *MetadataService) GetAllParticipants() ([]shared.Participant, error) {
 // THIS SECTION IS FOR THE AGGREGATOR'S FUNCTIONALITIES
 // -----------------------------------------------------
 
-func (s *MetadataService) AddAggregator(aggregator *shared.Aggregator) error {
+// AddAggregator submits a transaction to add a new aggregator record
+func (s *MetadataService) AddAggregator(communicationKeysCyphers map[string]string) error {
+	var communicationKeysCyphersJSON, err = json.Marshal(communicationKeysCyphers)
+	if err != nil {
+		return fmt.Errorf("failed to marshal communication keys cyphers JSON: %w", err)
+	}
+
+	err = s.client.SubmitTransaction(nil, "AddAggregator", string(communicationKeysCyphersJSON))
+	if err != nil {
+		return fmt.Errorf("failed to add aggregator record: %w", err)
+	}
+
 	return nil
+}
+
+// GetAggregator retrieves an aggregator record by id
+func (s *MetadataService) GetAggregator(aggregatorId string) (*shared.Aggregator, error) {
+	var aggregator shared.Aggregator
+
+	err := s.client.EvaluateTransaction(&aggregator, "GetAggregator", aggregatorId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query the aggregator record: %w", err)
+	}
+
+	return &aggregator, nil
+}
+
+// AggregatorExists returns true if an aggregator record exists
+func (s *MetadataService) AggregatorExists(aggregatorId string) (bool, error) {
+	var exists bool
+
+	err := s.client.EvaluateTransaction(&exists, "AggregatorExists", aggregatorId)
+	if err != nil {
+		return false, fmt.Errorf("failed to query if aggregator record exists: %w", err)
+	}
+
+	return exists, nil
+}
+
+// DeleteAggregator deletes an aggregator record, returns nil if successful
+func (s *MetadataService) DeleteAggregator() error {
+	err := s.client.SubmitTransaction(nil, "DeleteAggregator")
+	if err != nil {
+		return fmt.Errorf("failed to delete aggregator record: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateAggregator updates an existing aggregator record
+func (s *MetadataService) UpdateAggregator(communicationKeysCyphers map[string]string) error {
+	var communicationKeysCyphersJSON, err = json.Marshal(communicationKeysCyphers)
+	if err != nil {
+		return fmt.Errorf("failed to marshal communication keys cyphers JSON: %w", err)
+	}
+
+	err = s.client.SubmitTransaction(nil, "UpdateAggregator", string(communicationKeysCyphersJSON))
+	if err != nil {
+		return fmt.Errorf("failed to update aggregator record: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteAllAggregators deletes all aggregator records, returns nil if successful
+func (s *MetadataService) DeleteAllAggregators() error {
+	err := s.client.SubmitTransaction(nil, "DeleteAllAggregators")
+	if err != nil {
+		return fmt.Errorf("failed to delete all aggregators records: %w", err)
+	}
+
+	return nil
+}
+
+// GetAllAggregators queries all aggregator records from the ledger
+func (s *MetadataService) GetAllAggregators() ([]shared.Aggregator, error) {
+	var aggregatorsList []shared.Aggregator
+
+	err := s.client.EvaluateTransaction(&aggregatorsList, "GetAllAggregators")
+	if err != nil {
+		return nil, fmt.Errorf("failed to query all aggregators records: %w", err)
+	}
+	return aggregatorsList, nil
 }
 
 // ---------------------------------------------------------------------------
