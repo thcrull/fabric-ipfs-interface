@@ -1,0 +1,11 @@
+identity:
+  cert_path: "/home/thomas/go/src/github.com/thcrull/fabric-ipfs-interface/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/User1@org2.example.com/msp/signcerts/User1@org2.example.com-cert.pem"
+  key_path: "/home/thomas/go/src/github.com/thcrull/fabric-ipfs-interface/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/User1@org2.example.com/msp/keystore/priv_sk"
+  msp_id: "Org2MSP"
+
+network:
+  peer_endpoint: "localhost:9051"
+  tls_cert_path: "/home/thomas/go/src/github.com/thcrull/fabric-ipfs-interface/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt"
+  tls_hostname: "peer0.org2.example.com"
+  channel_name: "mychannel"
+  chaincode_name: "basic"

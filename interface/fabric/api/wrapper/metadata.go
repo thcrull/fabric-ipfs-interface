@@ -31,13 +31,15 @@ func NewMetadataService(cfg *fabricconfig.FabricConfig) (*MetadataService, error
 // ---------------------------------------------------------------------------
 
 // AddParticipant submits a transaction to add a new participant record
-func (s *MetadataService) AddParticipant(encapsulatedKey string, homomorphicSharedKeyCypher string, communicationKeyCypher string) error {
-	err := s.client.SubmitTransaction(nil, "AddParticipant", encapsulatedKey, homomorphicSharedKeyCypher, communicationKeyCypher)
+func (s *MetadataService) AddParticipant(encapsulatedKey string, homomorphicSharedKeyCypher string, communicationKeyCypher string) (string, error) {
+	var participantId string
+
+	err := s.client.SubmitTransaction(&participantId, "AddParticipant", encapsulatedKey, homomorphicSharedKeyCypher, communicationKeyCypher)
 	if err != nil {
-		return fmt.Errorf("failed to add participant record: %w", err)
+		return "", fmt.Errorf("failed to add participant record: %w", err)
 	}
 
-	return nil
+	return participantId, nil
 }
 
 // GetParticipant retrieves a participant record by id
@@ -110,18 +112,20 @@ func (s *MetadataService) GetAllParticipants() ([]shared.Participant, error) {
 // -----------------------------------------------------
 
 // AddAggregator submits a transaction to add a new aggregator record
-func (s *MetadataService) AddAggregator(communicationKeysCyphers map[string]string) error {
+func (s *MetadataService) AddAggregator(communicationKeysCyphers map[string]string) (string, error) {
 	var communicationKeysCyphersJSON, err = json.Marshal(communicationKeysCyphers)
 	if err != nil {
-		return fmt.Errorf("failed to marshal communication keys cyphers JSON: %w", err)
+		return "", fmt.Errorf("failed to marshal communication keys cyphers JSON: %w", err)
 	}
 
-	err = s.client.SubmitTransaction(nil, "AddAggregator", string(communicationKeysCyphersJSON))
+	var aggregatorId string
+
+	err = s.client.SubmitTransaction(&aggregatorId, "AddAggregator", string(communicationKeysCyphersJSON))
 	if err != nil {
-		return fmt.Errorf("failed to add aggregator record: %w", err)
+		return "", fmt.Errorf("failed to add aggregator record: %w", err)
 	}
 
-	return nil
+	return aggregatorId, nil
 }
 
 // GetAggregator retrieves an aggregator record by id

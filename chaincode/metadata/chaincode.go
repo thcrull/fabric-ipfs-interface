@@ -20,30 +20,30 @@ type MetadataSmartContract struct {
 // THIS SECTION DEALS WITH PARTICIPANT INFORMATION
 // ---------------------------------------------------
 
-// AddParticipant issues a participant record to the world state with the given details.
+// AddParticipant issues a participant record to the world state with the given details. Returns the participantId generated for the participant.
 func (s *MetadataSmartContract) AddParticipant(
 	ctx contractapi.TransactionContextInterface,
 	encapsulatedKey string,
 	homomorphicSharedKeyCypher string,
 	communicationKeyCypher string,
-) error {
+) (string, error) {
 	MSPID, serialNumber, err := getCreatorInfo(ctx)
 	if err != nil {
-		return fmt.Errorf("failed getting creator info: %v", err)
+		return "", fmt.Errorf("failed getting creator info: %v", err)
 	}
 	participantId := generateID(MSPID, serialNumber)
 
 	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{participantId})
 	if err != nil {
-		return fmt.Errorf("failed creating composite key: %v", err)
+		return "", fmt.Errorf("failed creating composite key: %v", err)
 	}
 
 	exists, err := s.ParticipantExists(ctx, participantId)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if exists {
-		return fmt.Errorf("the participant record for id %s already exists", participantId)
+		return "", fmt.Errorf("the participant record for id %s already exists", participantId)
 	}
 
 	participant := shared.Participant{
@@ -54,10 +54,10 @@ func (s *MetadataSmartContract) AddParticipant(
 	}
 	participantJSON, err := json.Marshal(participant)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return ctx.GetStub().PutState(compositeKey, participantJSON)
+	return participantId, ctx.GetStub().PutState(compositeKey, participantJSON)
 }
 
 // GetParticipant returns the participant record stored in the world state for the given id.
@@ -226,31 +226,31 @@ func (s *MetadataSmartContract) GetAllParticipants(ctx contractapi.TransactionCo
 // THIS SECTION DEALS WITH AGGREGATOR INFORMATION
 // ------------------------------------------------
 
-// AddAggregator issues a new aggregator record to the world state with the given details.
-func (s *MetadataSmartContract) AddAggregator(ctx contractapi.TransactionContextInterface, communicationKeysCyphersJSON string) error {
+// AddAggregator issues a new aggregator record to the world state with the given details. Returns the aggregatorId generated for the aggregator.
+func (s *MetadataSmartContract) AddAggregator(ctx contractapi.TransactionContextInterface, communicationKeysCyphersJSON string) (string, error) {
 	MSPID, serialNumber, err := getCreatorInfo(ctx)
 	if err != nil {
-		return fmt.Errorf("failed getting creator info: %v", err)
+		return "", fmt.Errorf("failed getting creator info: %v", err)
 	}
 	aggregatorId := generateID(MSPID, serialNumber)
 
 	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{aggregatorId})
 	if err != nil {
-		return fmt.Errorf("failed creating composite key: %v", err)
+		return "", fmt.Errorf("failed creating composite key: %v", err)
 	}
 
 	exists, err := s.AggregatorExists(ctx, aggregatorId)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if exists {
-		return fmt.Errorf("the aggregator record for id %s already exists", aggregatorId)
+		return "", fmt.Errorf("the aggregator record for id %s already exists", aggregatorId)
 	}
 
 	var communicationKeysCyphers map[string]string
 	err = json.Unmarshal([]byte(communicationKeysCyphersJSON), &communicationKeysCyphers)
 	if err != nil {
-		return fmt.Errorf("failed unmarshaling communication keys cyphers: %v", err)
+		return "", fmt.Errorf("failed unmarshaling communication keys cyphers: %v", err)
 	}
 
 	aggregator := shared.Aggregator{
@@ -259,10 +259,10 @@ func (s *MetadataSmartContract) AddAggregator(ctx contractapi.TransactionContext
 	}
 	aggregatorJSON, err := json.Marshal(aggregator)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return ctx.GetStub().PutState(compositeKey, aggregatorJSON)
+	return aggregatorId, ctx.GetStub().PutState(compositeKey, aggregatorJSON)
 }
 
 // GetAggregator returns the aggregator record stored in the world state for the given aggregatorId.
