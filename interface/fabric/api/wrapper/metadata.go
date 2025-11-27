@@ -31,8 +31,8 @@ func NewMetadataService(cfg *fabricconfig.FabricConfig) (*MetadataService, error
 // ---------------------------------------------------------------------------
 
 // AddParticipant submits a transaction to add a new participant record
-func (s *MetadataService) AddParticipant(participant *shared.Participant) error {
-	err := s.client.SubmitTransaction(nil, "AddParticipant", participant.EncapsulatedKey, participant.HomomorphicSharedKeyCypher, participant.CommunicationKeyCypher)
+func (s *MetadataService) AddParticipant(encapsulatedKey string, homomorphicSharedKeyCypher string, communicationKeyCypher string) error {
+	err := s.client.SubmitTransaction(nil, "AddParticipant", encapsulatedKey, homomorphicSharedKeyCypher, communicationKeyCypher)
 	if err != nil {
 		return fmt.Errorf("failed to add participant record: %w", err)
 	}
@@ -199,10 +199,10 @@ func (s *MetadataService) GetAllAggregators() ([]shared.Aggregator, error) {
 // ---------------------------------------------------------------------------
 
 // AddParticipantModelMetadata submits a transaction to add a new metadata record for a participant's model
-func (s *MetadataService) AddParticipantModelMetadata(participantModelMetadata *shared.ParticipantModelMetadata) error {
-	epochStr := strconv.Itoa(participantModelMetadata.Epoch)
+func (s *MetadataService) AddParticipantModelMetadata(epoch int, modelHashCid string, homomorphicHash string) error {
+	epochStr := strconv.Itoa(epoch)
 
-	err := s.client.SubmitTransaction(nil, "AddParticipantModelMetadata", epochStr, participantModelMetadata.ParticipantId, participantModelMetadata.ModelHashCid, participantModelMetadata.HomomorphicHash)
+	err := s.client.SubmitTransaction(nil, "AddParticipantModelMetadata", epochStr, modelHashCid, homomorphicHash)
 	if err != nil {
 		return fmt.Errorf("failed to add participant model metadata record: %w", err)
 	}
