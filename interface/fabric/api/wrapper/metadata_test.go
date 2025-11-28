@@ -367,3 +367,91 @@ func TestGeneral(t *testing.T) {
 	}
 	t.Logf("All aggregator model metadata: %+v", allAggMeta)
 }
+
+func TestDeleteAllAdminOnly(t *testing.T) {
+	// 1. Try as USER1 → SHOULD FAIL
+	err := testMetadataServiceUser1.DeleteAllParticipants()
+	if err == nil {
+		t.Fatalf("User1 was able to call DeleteAllParticipants but should NOT have permission")
+	}
+	t.Log("Correctly blocked User1 from DeleteAllParticipants")
+
+	err = testMetadataServiceUser1.DeleteAllAggregators()
+	if err == nil {
+		t.Fatalf("User1 was able to call DeleteAllAggregators but should NOT have permission")
+	}
+	t.Log("Correctly blocked User1 from DeleteAllAggregators")
+
+	err = testMetadataServiceUser1.DeleteAllParticipantModelMetadata()
+	if err == nil {
+		t.Fatalf("User1 was able to call DeleteAllParticipantModelMetadata but should NOT have permission")
+	}
+	t.Log("Correctly blocked User1 from DeleteAllParticipantModelMetadata")
+
+	err = testMetadataServiceUser1.DeleteAllAggregatorModelMetadata()
+	if err == nil {
+		t.Fatalf("User1 was able to call DeleteAllAggregatorModelMetadata but should NOT have permission")
+	}
+	t.Log("Correctly blocked User1 from DeleteAllAggregatorModelMetadata")
+
+	// 2. Try as ADMIN → SHOULD PASS
+	if err := testMetadataServiceAdmin.DeleteAllParticipants(); err != nil {
+		t.Fatalf("Admin failed DeleteAllParticipants: %v", err)
+	}
+	t.Log("Admin successfully called DeleteAllParticipants")
+
+	if err := testMetadataServiceAdmin.DeleteAllAggregators(); err != nil {
+		t.Fatalf("Admin failed DeleteAllAggregators: %v", err)
+	}
+	t.Log("Admin successfully called DeleteAllAggregators")
+
+	if err := testMetadataServiceAdmin.DeleteAllParticipantModelMetadata(); err != nil {
+		t.Fatalf("Admin failed DeleteAllParticipantModelMetadata: %v", err)
+	}
+	t.Log("Admin successfully called DeleteAllParticipantModelMetadata")
+
+	if err := testMetadataServiceAdmin.DeleteAllAggregatorModelMetadata(); err != nil {
+		t.Fatalf("Admin failed DeleteAllAggregatorModelMetadata: %v", err)
+	}
+	t.Log("Admin successfully called DeleteAllAggregatorModelMetadata")
+}
+
+func TestLoggingAdminOnly(t *testing.T) {
+	// 1. USER1 should NOT be able to read logs
+	_, err := testMetadataServiceUser1.GetAllLogsWithoutCreator()
+	if err == nil {
+		t.Fatalf("User1 was able to call GetAllLogsWithoutCreator but should NOT have permission")
+	}
+	t.Log("Correctly blocked User1 from GetAllLogsWithoutCreator")
+
+	_, err = testMetadataServiceUser1.GetAllLogs()
+	if err == nil {
+		t.Fatalf("User1 was able to call GetAllLogs but should NOT have permission")
+	}
+	t.Log("Correctly blocked User1 from GetAllLogs")
+
+	_, err = testMetadataServiceUser1.GetAllLogsForUser("Org1MSP", "user1-serial")
+	if err == nil {
+		t.Fatalf("User1 was able to call GetAllLogsForUser but should NOT have permission")
+	}
+	t.Logf("Correctly blocked User1 from GetAllLogsForUser")
+
+	// 3. ADMIN should access all logs successfully
+	adminLogs, err := testMetadataServiceAdmin.GetAllLogsWithoutCreator()
+	if err != nil {
+		t.Fatalf("Admin failed GetAllLogsWithoutCreator: %v", err)
+	}
+	t.Logf("Admin successfully fetched logs without creator: %d entries", len(adminLogs))
+
+	adminLogsFull, err := testMetadataServiceAdmin.GetAllLogs()
+	if err != nil {
+		t.Fatalf("Admin failed GetAllLogs: %v", err)
+	}
+	t.Logf("Admin successfully fetched logs with creator info: %d entries", len(adminLogsFull))
+
+	adminLogsForUser, err := testMetadataServiceAdmin.GetAllLogsForUser("Org1MSP", "user1-serial")
+	if err != nil {
+		t.Fatalf("Admin failed GetAllLogsForUser: %v", err)
+	}
+	t.Logf("Admin successfully fetched logs for user (Org1MSP, user1-serial): %d entries", len(adminLogsForUser))
+}
