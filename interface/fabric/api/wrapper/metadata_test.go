@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 
 func setup() {
 	// Create the metadata service clients with the Client role
-	cfg, err := fabricconfig.LoadConfig("../../../config/user1.yaml")
+	cfg, err := fabricconfig.LoadConfig("../../../../config/user1.yaml")
 	if err != nil {
 		panic("failed to fetch config file: " + err.Error())
 	}
@@ -37,7 +37,7 @@ func setup() {
 		panic("failed to create metadata service: " + err.Error())
 	}
 
-	cfg, err = fabricconfig.LoadConfig("../../../config/user2.yaml")
+	cfg, err = fabricconfig.LoadConfig("../../../../config/user2.yaml")
 	if err != nil {
 		panic("failed to fetch config file: " + err.Error())
 	}
@@ -48,7 +48,7 @@ func setup() {
 	}
 
 	// Create the metadata service client with the Admin role
-	cfg, err = fabricconfig.LoadConfig("../../../config/admin.yaml")
+	cfg, err = fabricconfig.LoadConfig("../../../../config/admin.yaml")
 	if err != nil {
 		panic("failed to fetch config file: " + err.Error())
 	}
