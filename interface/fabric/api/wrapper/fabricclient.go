@@ -84,6 +84,12 @@ func (c *FabricClient) SubmitTransaction(out interface{}, name string, args ...s
 		return nil
 	}
 
+	// If it returned a string, do not unmarshal it
+	if s, ok := out.(*string); ok {
+		*s = string(res)
+		return nil
+	}
+
 	return json.Unmarshal(res, out)
 }
 
@@ -107,7 +113,7 @@ func (c *FabricClient) EvaluateTransaction(out interface{}, name string, args ..
 // by scanning committed blocks starting at the provided block number.
 // TxID - the transaction ID to look for.
 // StartBlock - the block number to start scanning from. Leave 0 to scan the whole ledger. Can be used for faster searching.
-func (c *FabricClient) GetTransactionCreator(ctx context.Context, txID string, startBlock uint64) (bool, *shared.TxCreatorInfo, error) {
+func (c *FabricClient) GetTransactionCreator(ctx context.Context, txID string, startBlock uint64) (bool, *shared.UserInfo, error) {
 	// Fast scan the ledger for the block that contains the transaction.
 	found, targetBlock, err := c.findTxBlock(ctx, txID, startBlock)
 	if err != nil {
@@ -193,12 +199,11 @@ func (c *FabricClient) GetTransactionCreator(ctx context.Context, txID string, s
 		}
 
 		// Return creator information
-		return true, &shared.TxCreatorInfo{
-			TxID:               txID,
+		return true, &shared.UserInfo{
 			MSPID:              sid.Mspid,
 			CommonName:         cert.Subject.CommonName,
 			OrganizationalUnit: cert.Subject.OrganizationalUnit,
-			SerialNumber:       cert.SerialNumber.Uint64(),
+			SerialNumber:       cert.SerialNumber.String(),
 		}, nil
 	}
 
