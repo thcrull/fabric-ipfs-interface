@@ -1,4 +1,4 @@
-package metadata
+package chaincode
 
 import (
 	"crypto/sha256"
