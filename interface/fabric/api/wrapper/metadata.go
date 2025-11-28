@@ -30,7 +30,7 @@ func NewMetadataService(cfg *fabricconfig.FabricConfig) (*MetadataService, error
 // THIS SECTION IS FOR THE PARTICIPANT'S FUNCTIONALITIES
 // ---------------------------------------------------------------------------
 
-// AddParticipant submits a transaction to add a new participant record
+// AddParticipant submits a transaction to add a new participant record. The new participant will be bound to the caller of the transaction. It returns the participant id generated from the MSPID and SerialNumber of the caller.
 func (s *MetadataService) AddParticipant(encapsulatedKey string, homomorphicSharedKeyCypher string, communicationKeyCypher string) (string, error) {
 	var participantId string
 
@@ -66,7 +66,7 @@ func (s *MetadataService) ParticipantExists(participantId string) (bool, error) 
 	return exists, nil
 }
 
-// DeleteParticipant deletes a participant record, returns nil if successful
+// DeleteParticipant deletes the caller's participant record, returns nil if successful
 func (s *MetadataService) DeleteParticipant() error {
 	err := s.client.SubmitTransaction(nil, "DeleteParticipant")
 	if err != nil {
@@ -76,7 +76,7 @@ func (s *MetadataService) DeleteParticipant() error {
 	return nil
 }
 
-// UpdateParticipant updates a existing participant record
+// UpdateParticipant updates the caller's participant record
 func (s *MetadataService) UpdateParticipant(encapsulatedKey string, homomorphicSharedKeyCypher string, communicationKeyCypher string) error {
 	err := s.client.SubmitTransaction(nil, "UpdateParticipant", encapsulatedKey, homomorphicSharedKeyCypher, communicationKeyCypher)
 	if err != nil {
@@ -86,7 +86,7 @@ func (s *MetadataService) UpdateParticipant(encapsulatedKey string, homomorphicS
 	return nil
 }
 
-// DeleteAllParticipants deletes all participant records, returns nil if successful
+// DeleteAllParticipants deletes all participant records, returns nil if successful. Only the admin can delete all participants records.
 func (s *MetadataService) DeleteAllParticipants() error {
 	err := s.client.SubmitTransaction(nil, "DeleteAllParticipants")
 	if err != nil {
@@ -111,7 +111,7 @@ func (s *MetadataService) GetAllParticipants() ([]shared.Participant, error) {
 // THIS SECTION IS FOR THE AGGREGATOR'S FUNCTIONALITIES
 // -----------------------------------------------------
 
-// AddAggregator submits a transaction to add a new aggregator record
+// AddAggregator submits a transaction to add a new aggregator record. The new aggregator will be bound to the caller of the transaction. It returns the aggregator id generated from the MSPID and SerialNumber of the caller.
 func (s *MetadataService) AddAggregator(communicationKeysCyphers map[string]string) (string, error) {
 	var communicationKeysCyphersJSON, err = json.Marshal(communicationKeysCyphers)
 	if err != nil {
@@ -152,7 +152,7 @@ func (s *MetadataService) AggregatorExists(aggregatorId string) (bool, error) {
 	return exists, nil
 }
 
-// DeleteAggregator deletes an aggregator record, returns nil if successful
+// DeleteAggregator deletes the caller's aggregator record, returns nil if successful
 func (s *MetadataService) DeleteAggregator() error {
 	err := s.client.SubmitTransaction(nil, "DeleteAggregator")
 	if err != nil {
@@ -162,7 +162,7 @@ func (s *MetadataService) DeleteAggregator() error {
 	return nil
 }
 
-// UpdateAggregator updates an existing aggregator record
+// UpdateAggregator updates the caller's aggregator record
 func (s *MetadataService) UpdateAggregator(communicationKeysCyphers map[string]string) error {
 	var communicationKeysCyphersJSON, err = json.Marshal(communicationKeysCyphers)
 	if err != nil {
@@ -177,7 +177,7 @@ func (s *MetadataService) UpdateAggregator(communicationKeysCyphers map[string]s
 	return nil
 }
 
-// DeleteAllAggregators deletes all aggregator records, returns nil if successful
+// DeleteAllAggregators deletes all aggregator records, returns nil if successful. Only the admin can delete all aggregators records.
 func (s *MetadataService) DeleteAllAggregators() error {
 	err := s.client.SubmitTransaction(nil, "DeleteAllAggregators")
 	if err != nil {
@@ -202,7 +202,7 @@ func (s *MetadataService) GetAllAggregators() ([]shared.Aggregator, error) {
 // THIS SECTION IS FOR THE PARTICIPANT MODEL METADATA RECORDS' FUNCTIONALITIES
 // ---------------------------------------------------------------------------
 
-// AddParticipantModelMetadata submits a transaction to add a new metadata record for a participant's model
+// AddParticipantModelMetadata submits a transaction to add a new metadata record for a participant's model. The model can only be for the caller's participant.
 func (s *MetadataService) AddParticipantModelMetadata(epoch int, modelHashCid string, homomorphicHash string) error {
 	epochStr := strconv.Itoa(epoch)
 
@@ -240,7 +240,7 @@ func (s *MetadataService) ParticipantModelMetadataExists(epoch int, participantI
 	return exists, nil
 }
 
-// DeleteParticipantModelMetadata deletes a participant model metadata record, returns nil if successful
+// DeleteParticipantModelMetadata deletes a participant model metadata record, returns nil if successful. Can only delete records made by the caller's participant.
 func (s *MetadataService) DeleteParticipantModelMetadata(epoch int) error {
 	epochStr := strconv.Itoa(epoch)
 
@@ -252,7 +252,7 @@ func (s *MetadataService) DeleteParticipantModelMetadata(epoch int) error {
 	return nil
 }
 
-// UpdateParticipantModelMetadata updates an existing participant model metadata record
+// UpdateParticipantModelMetadata updates an existing participant model metadata record. Can only update records made by the caller's participant.
 func (s *MetadataService) UpdateParticipantModelMetadata(epoch int, modelHashCid string, homomorphicHash string) error {
 	epochStr := strconv.Itoa(epoch)
 
@@ -264,7 +264,7 @@ func (s *MetadataService) UpdateParticipantModelMetadata(epoch int, modelHashCid
 	return nil
 }
 
-// DeleteAllParticipantModelMetadata deletes all participant model metadata records, returns nil if successful
+// DeleteAllParticipantModelMetadata deletes all participant model metadata records, returns nil if successful. Only the admin can delete all participant model metadata records.
 func (s *MetadataService) DeleteAllParticipantModelMetadata() error {
 	err := s.client.SubmitTransaction(nil, "DeleteAllParticipantModelMetadata")
 	if err != nil {
@@ -314,7 +314,7 @@ func (s *MetadataService) GetAllParticipantModelMetadataByEpoch(epoch int) ([]sh
 // THIS SECTION IS FOR THE AGGREGATOR MODEL METADATA RECORDS' FUNCTIONALITIES
 // ---------------------------------------------------------------------------
 
-// AddAggregatorModelMetadata submits a transaction to add a new aggregator model metadata record
+// AddAggregatorModelMetadata submits a transaction to add a new aggregator model metadata record. The model can only be for the caller's aggregator.
 func (s *MetadataService) AddAggregatorModelMetadata(epoch int, modelHashCid string, participantIds []string) error {
 	epochStr := strconv.Itoa(epoch)
 	var participantIdsJSON, err = json.Marshal(participantIds)
@@ -356,7 +356,7 @@ func (s *MetadataService) AggregatorModelMetadataExists(epoch int, aggregatorId 
 	return exists, nil
 }
 
-// DeleteAggregatorModelMetadata deletes an aggregator model metadata record, returns nil if successful
+// DeleteAggregatorModelMetadata deletes an aggregator model metadata record, returns nil if successful. Can only delete records made by the caller's aggregator.
 func (s *MetadataService) DeleteAggregatorModelMetadata(epoch int) error {
 	epochStr := strconv.Itoa(epoch)
 
@@ -368,7 +368,7 @@ func (s *MetadataService) DeleteAggregatorModelMetadata(epoch int) error {
 	return nil
 }
 
-// UpdateAggregatorModelMetadata updates an existing aggregator model metadata record
+// UpdateAggregatorModelMetadata updates an existing aggregator model metadata record. Can only update records made by the caller's aggregator.
 func (s *MetadataService) UpdateAggregatorModelMetadata(epoch int, modelHashCid string, participantIds []string) error {
 	epochStr := strconv.Itoa(epoch)
 	var participantIdsJSON, err = json.Marshal(participantIds)
@@ -384,7 +384,7 @@ func (s *MetadataService) UpdateAggregatorModelMetadata(epoch int, modelHashCid 
 	return nil
 }
 
-// DeleteAllAggregatorModelMetadata deletes all aggregator model metadata records, returns nil if successful
+// DeleteAllAggregatorModelMetadata deletes all aggregator model metadata records, returns nil if successful. Only the admin can delete all aggregator model metadata records.
 func (s *MetadataService) DeleteAllAggregatorModelMetadata() error {
 	err := s.client.SubmitTransaction(nil, "DeleteAllAggregatorModelMetadata")
 	if err != nil {
@@ -422,6 +422,7 @@ func (s *MetadataService) GetAllAggregatorModelMetadataByAggregator(aggregatorId
 
 // GetAllLogsWithoutCreator returns all logs from the ledger without the creator information.
 // This is much faster than GetAllLogs() since it doesn't need to parse the ledger N times for the creators.
+// Only admins can use this function.
 func (s *MetadataService) GetAllLogsWithoutCreator() ([]shared.LogEntry, error) {
 	var history []shared.LogEntry
 
@@ -435,6 +436,7 @@ func (s *MetadataService) GetAllLogsWithoutCreator() ([]shared.LogEntry, error) 
 
 // GetAllLogs returns all logs from the ledger with the creator information.
 // This might be slow for extremely large ledgers.
+// Only admins can use this function.
 func (s *MetadataService) GetAllLogs() ([]shared.LogEntry, error) {
 	var history []shared.LogEntry
 
@@ -459,6 +461,7 @@ func (s *MetadataService) GetAllLogs() ([]shared.LogEntry, error) {
 }
 
 // GetAllLogsForUser returns all logs from the ledger tied to the user.
+// Only admins can use this function.
 // MSPID - the MSP ID of the user
 // SerialNumber - the serial number of the user
 func (s *MetadataService) GetAllLogsForUser(MSPID string, SerialNumber string) ([]shared.LogEntry, error) {
