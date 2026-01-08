@@ -46,7 +46,7 @@ type ParticipantModelMetadata struct {
 }
 
 // AggregatorModelMetadata represents an aggregator's global model update's metadata.
-// AggregatorId - the aggregator's id.'
+// AggregatorId - the aggregator's id.
 // Epoch - the epoch of the model update.
 // ParticipantIds - the participants' ids that contributed to the global model update.
 // ModelHashCid - the IPFS CID of the global model update.

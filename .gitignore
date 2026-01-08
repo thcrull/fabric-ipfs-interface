@@ -36,3 +36,5 @@ go.work.sum
 
 /fabric-samples
 /kubo
+/testing-utils
+/data
