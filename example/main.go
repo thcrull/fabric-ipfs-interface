@@ -9,9 +9,7 @@ import (
 	"os"
 	"time"
 
-	fabricconfig "github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/config"
 	fabricclient "github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/wrapper"
-	ipfsconfig "github.com/thcrull/fabric-ipfs-interface/interface/ipfs/api/config"
 	ipfsclient "github.com/thcrull/fabric-ipfs-interface/interface/ipfs/api/wrapper"
 	pb "github.com/thcrull/fabric-ipfs-interface/weightpb"
 )
@@ -43,22 +41,12 @@ func main() {
 	//-----------------------------------
 	// 1. Create Fabric and IPFS clients
 	//-----------------------------------
-	fabricCfg, err := fabricconfig.LoadConfig("../config/admin.yaml")
-	if err != nil {
-		log.Fatalf("error loading fabric config: %v", err)
-	}
-
-	ipfsCfg, err := ipfsconfig.LoadConfig("../config/admin.yaml")
-	if err != nil {
-		log.Fatalf("error loading ipfs config: %v", err)
-	}
-
-	metadataService, err := fabricclient.NewMetadataService(fabricCfg)
+	metadataService, err := fabricclient.NewMetadataService("../config/admin.yaml")
 	if err != nil {
 		log.Fatalf("error creating fabric client: %v", err)
 	}
 
-	ipfsClient, err := ipfsclient.NewIpfsClient(ipfsCfg)
+	ipfsClient, err := ipfsclient.NewIpfsClient("../config/admin.yaml")
 	if err != nil {
 		log.Fatalf("error creating ipfs client: %v", err)
 	}

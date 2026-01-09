@@ -3,8 +3,6 @@ package fabricclient
 import (
 	"os"
 	"testing"
-
-	fabricconfig "github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/config"
 )
 
 var testMetadataServiceUser1 *MetadataService
@@ -26,34 +24,21 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	// Create the metadata service clients with the Client role
-	cfg, err := fabricconfig.LoadConfig("../../../../config/user1.yaml")
-	if err != nil {
-		panic("failed to fetch config file: " + err.Error())
-	}
+	var err error
 
-	testMetadataServiceUser1, err = NewMetadataService(cfg)
+	// Create the metadata service clients with the Client role
+	testMetadataServiceUser1, err = NewMetadataService("../../../../config/user1.yaml")
 	if err != nil {
 		panic("failed to create metadata service: " + err.Error())
 	}
 
-	cfg, err = fabricconfig.LoadConfig("../../../../config/user2.yaml")
-	if err != nil {
-		panic("failed to fetch config file: " + err.Error())
-	}
-
-	testMetadataServiceUser2, err = NewMetadataService(cfg)
+	testMetadataServiceUser2, err = NewMetadataService("../../../../config/user2.yaml")
 	if err != nil {
 		panic("failed to create metadata service: " + err.Error())
 	}
 
 	// Create the metadata service client with the Admin role
-	cfg, err = fabricconfig.LoadConfig("../../../../config/admin.yaml")
-	if err != nil {
-		panic("failed to fetch config file: " + err.Error())
-	}
-
-	testMetadataServiceAdmin, err = NewMetadataService(cfg)
+	testMetadataServiceAdmin, err = NewMetadataService("../../../../config/admin.yaml")
 	if err != nil {
 		panic("failed to create metadata service: " + err.Error())
 	}

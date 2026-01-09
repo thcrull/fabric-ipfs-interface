@@ -11,9 +11,7 @@ import (
 	"testing"
 	"time"
 
-	fabricconfig "github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/config"
 	fabricclient "github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/wrapper"
-	ipfsconfig "github.com/thcrull/fabric-ipfs-interface/interface/ipfs/api/config"
 	ipfsclient "github.com/thcrull/fabric-ipfs-interface/interface/ipfs/api/wrapper"
 	pb "github.com/thcrull/fabric-ipfs-interface/weightpb"
 )
@@ -103,16 +101,13 @@ func runBenchmark(b *testing.B, file string, epochs int) {
 	// -------------------------------
 	// Setup Fabric & IPFS
 	// -------------------------------
-	fabricCfg, _ := fabricconfig.LoadConfig("../config/admin.yaml")
-	ipfsCfg, _ := ipfsconfig.LoadConfig("../config/admin.yaml")
-
-	meta, err := fabricclient.NewMetadataService(fabricCfg)
+	meta, err := fabricclient.NewMetadataService("../config/admin.yaml")
 	if err != nil {
 		b.Fatalf("metadata: %v", err)
 	}
 	defer meta.Close()
 
-	ipfs, err := ipfsclient.NewIpfsClient(ipfsCfg)
+	ipfs, err := ipfsclient.NewIpfsClient("../config/admin.yaml")
 	if err != nil {
 		b.Fatalf("ipfs: %v", err)
 	}

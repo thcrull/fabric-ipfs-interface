@@ -1,7 +1,6 @@
 package shared
 
 // UserInfo holds information about a user of the ledger.
-// TxID - the transaction id.
 // MSPID - the MSP ID of the user.
 // SerialNumber - the serial number of the user.
 // CommonName - the common name of the user.
@@ -20,14 +19,14 @@ type UserInfo struct {
 // CommunicationKeyCypher - the participant's communication key cypher. This key is used to encrypt the messages exchanged between the participant and the aggregator.
 type Participant struct {
 	ParticipantId              string `json:"participant_id"`
-	EncapsulatedKey            string `json:"encap_key"`
-	HomomorphicSharedKeyCypher string `json:"homomorphic_key_cypher"`
+	EncapsulatedKey            string `json:"encap_key"`              // STEP 2
+	HomomorphicSharedKeyCypher string `json:"homomorphic_key_cypher"` //STEP 4
 	CommunicationKeyCypher     string `json:"comm_key_cypher"`
 }
 
 // Aggregator holds aggregator's information.
 // AggregatorId - the aggregator's id.
-// CommunicationKeyCyphers - a map of communication key cyphers, where the key is the participant's id. These keys are used to encrypt the messages exchanged between the aggregator and the participant.
+// CommunicationKeysCyphers - a map of communication key cyphers, where the key is the participant's id. These keys are used to encrypt the messages exchanged between the aggregator and the participant.
 type Aggregator struct {
 	AggregatorId             string            `json:"aggregator_id"`
 	CommunicationKeysCyphers map[string]string `json:"comm_keys_cyphers"`
@@ -62,7 +61,7 @@ type AggregatorModelMetadata struct {
 // TxCreator - information about the creator of the transaction.
 // Timestamp - the timestamp of the transaction.
 // IsDelete - whether the entry is a delete operation.
-// Value - the value of the entry. This is usually the changes made by the transaction.
+// Changes - the changes made by the transaction.
 type LogEntry struct {
 	TxID      string      `json:"txId"`
 	TxCreator UserInfo    `json:"txCreator"`
