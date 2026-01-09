@@ -32,7 +32,12 @@ type FabricClient struct {
 // It sets up the gRPC connection, loads the client identity and signer,
 // and prepares the network and contract for interaction.
 // Returns an error if any of these steps fail.
-func NewFabricClient(cfg *fabricconfig.FabricConfig) (*FabricClient, error) {
+func NewFabricClient(configPath string) (*FabricClient, error) {
+	cfg, err := fabricconfig.LoadConfig(configPath)
+	if err != nil {
+		return nil, err
+	}
+
 	conn, err := fabricutils.NewGrpcConnection(cfg)
 	if err != nil {
 		return nil, err

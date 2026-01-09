@@ -22,7 +22,12 @@ type IpfsClient struct {
 }
 
 // NewIpfsClient creates a new IpfsClient instance.
-func NewIpfsClient(cfg *ipfsconfig.IpfsConfig) (*IpfsClient, error) {
+func NewIpfsClient(configPath string) (*IpfsClient, error) {
+	cfg, err := ipfsconfig.LoadConfig(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("error loading IPFS config: %w", err)
+	}
+
 	httpClient := &http.Client{}
 
 	nodeHttpApi, err := rpc.NewURLApiWithClient(cfg.Ipfs.NodePath, httpClient)

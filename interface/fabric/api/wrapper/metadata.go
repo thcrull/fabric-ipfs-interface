@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/config"
 	"github.com/thcrull/fabric-ipfs-interface/shared"
 )
 
@@ -17,8 +16,8 @@ type MetadataService struct {
 }
 
 // NewMetadataService creates a service for metadata transactions
-func NewMetadataService(cfg *fabricconfig.FabricConfig) (*MetadataService, error) {
-	fabricClient, err := NewFabricClient(cfg)
+func NewMetadataService(configPath string) (*MetadataService, error) {
+	fabricClient, err := NewFabricClient(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("error creating metadata service: %w", err)
 	}
