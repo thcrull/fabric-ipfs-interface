@@ -1,8 +1,6 @@
 package chaincode
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -20,30 +18,25 @@ type MetadataSmartContract struct {
 // THIS SECTION DEALS WITH PARTICIPANT INFORMATION
 // ---------------------------------------------------
 
-// AddParticipant issues a participant record to the world state with the given details. Returns the participantId generated for the participant.
+// AddParticipant issues a participant record to the world state with the given details. The record is bound to the client's identity.
 func (s *MetadataSmartContract) AddParticipant(
 	ctx contractapi.TransactionContextInterface,
+	participantId int,
 	encapsulatedKey string,
 	homomorphicSharedKeyCypher string,
 	communicationKeyCypher string,
-) (string, error) {
-	MSPID, serialNumber, err := getCreatorInfo(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed getting creator info: %v", err)
-	}
-	participantId := generateID(MSPID, serialNumber)
-
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{participantId})
-	if err != nil {
-		return "", fmt.Errorf("failed creating composite key: %v", err)
-	}
-
+) error {
 	exists, err := s.ParticipantExists(ctx, participantId)
 	if err != nil {
-		return "", err
+		return err
 	}
 	if exists {
-		return "", fmt.Errorf("the participant record for id %s already exists", participantId)
+		return fmt.Errorf("the participant record for id %d already exists", participantId)
+	}
+
+	MSPID, serialNumber, err := getCreatorInfo(ctx)
+	if err != nil {
+		return fmt.Errorf("failed getting creator info: %v", err)
 	}
 
 	participant := shared.Participant{
@@ -51,18 +44,25 @@ func (s *MetadataSmartContract) AddParticipant(
 		EncapsulatedKey:            encapsulatedKey,
 		HomomorphicSharedKeyCypher: homomorphicSharedKeyCypher,
 		CommunicationKeyCypher:     communicationKeyCypher,
+		MSPID:                      MSPID,
+		SerialNumber:               serialNumber,
 	}
 	participantJSON, err := json.Marshal(participant)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return participantId, ctx.GetStub().PutState(compositeKey, participantJSON)
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{fmt.Sprintf("%d", participantId)})
+	if err != nil {
+		return fmt.Errorf("failed creating composite key: %v", err)
+	}
+
+	return ctx.GetStub().PutState(compositeKey, participantJSON)
 }
 
 // GetParticipant returns the participant record stored in the world state for the given id.
-func (s *MetadataSmartContract) GetParticipant(ctx contractapi.TransactionContextInterface, participantId string) (*shared.Participant, error) {
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{participantId})
+func (s *MetadataSmartContract) GetParticipant(ctx contractapi.TransactionContextInterface, participantId int) (*shared.Participant, error) {
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{fmt.Sprintf("%d", participantId)})
 	if err != nil {
 		return nil, fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -72,7 +72,7 @@ func (s *MetadataSmartContract) GetParticipant(ctx contractapi.TransactionContex
 		return nil, fmt.Errorf("failed to read from world state: %v", err)
 	}
 	if participantJSON == nil {
-		return nil, fmt.Errorf("the participant record for id %s does not exist", participantId)
+		return nil, fmt.Errorf("the participant record for id %d does not exist", participantId)
 	}
 
 	var participant shared.Participant
@@ -85,8 +85,8 @@ func (s *MetadataSmartContract) GetParticipant(ctx contractapi.TransactionContex
 }
 
 // ParticipantExists returns true when a participant record for the given id exists in the world state.
-func (s *MetadataSmartContract) ParticipantExists(ctx contractapi.TransactionContextInterface, participantId string) (bool, error) {
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{participantId})
+func (s *MetadataSmartContract) ParticipantExists(ctx contractapi.TransactionContextInterface, participantId int) (bool, error) {
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{fmt.Sprintf("%d", participantId)})
 	if err != nil {
 		return false, fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -99,23 +99,15 @@ func (s *MetadataSmartContract) ParticipantExists(ctx contractapi.TransactionCon
 	return participantJSON != nil, nil
 }
 
-// DeleteParticipant deletes a given participant record from the world state.
-func (s *MetadataSmartContract) DeleteParticipant(ctx contractapi.TransactionContextInterface) error {
-	MSPID, serialNumber, err := getCreatorInfo(ctx)
-	if err != nil {
-		return fmt.Errorf("failed getting creator info: %v", err)
-	}
-	participantId := generateID(MSPID, serialNumber)
-
-	exists, err := s.ParticipantExists(ctx, participantId)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return fmt.Errorf("the participant record for id %s does not exist", participantId)
+// DeleteParticipant deletes a given participant record from the world state. Can only be done by the owner of the participant or an admin.
+func (s *MetadataSmartContract) DeleteParticipant(ctx contractapi.TransactionContextInterface, participantId int) error {
+	errAdminCheck := adminCheck(ctx)
+	errParticipantCheck := s.ownerCheckParticipant(ctx, participantId)
+	if errAdminCheck != nil && errParticipantCheck != nil {
+		return fmt.Errorf("permission denied: client is not an admin or owner of participant %d", participantId)
 	}
 
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{participantId})
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{fmt.Sprintf("%d", participantId)})
 	if err != nil {
 		return fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -123,40 +115,36 @@ func (s *MetadataSmartContract) DeleteParticipant(ctx contractapi.TransactionCon
 	return ctx.GetStub().DelState(compositeKey)
 }
 
-// UpdateParticipant updates a participant record in the world state with provided parameters.
+// UpdateParticipant updates a participant record in the world state with provided parameters. Can only be done by the owner of the participant or an admin.
 func (s *MetadataSmartContract) UpdateParticipant(
 	ctx contractapi.TransactionContextInterface,
+	participantId int,
 	encapsulatedKey string,
 	homomorphicSharedKeyCypher string,
 	communicationKeyCypher string,
 ) error {
-	MSPID, serialNumber, err := getCreatorInfo(ctx)
-	if err != nil {
-		return fmt.Errorf("failed getting creator info: %v", err)
+	errAdminCheck := adminCheck(ctx)
+	errParticipantCheck := s.ownerCheckParticipant(ctx, participantId)
+	if errAdminCheck != nil && errParticipantCheck != nil {
+		return fmt.Errorf("permission denied: client is not an admin or owner of participant %d", participantId)
 	}
-	participantId := generateID(MSPID, serialNumber)
 
-	exists, err := s.ParticipantExists(ctx, participantId)
+	participant, err := s.GetParticipant(ctx, participantId)
 	if err != nil {
 		return err
 	}
-	if !exists {
-		return fmt.Errorf("the participant record for id %s does not exist", participantId)
-	}
 
 	// overwriting original participant with new participant
-	participant := shared.Participant{
-		ParticipantId:              participantId,
-		EncapsulatedKey:            encapsulatedKey,
-		HomomorphicSharedKeyCypher: homomorphicSharedKeyCypher,
-		CommunicationKeyCypher:     communicationKeyCypher,
-	}
+	participant.EncapsulatedKey = encapsulatedKey
+	participant.HomomorphicSharedKeyCypher = homomorphicSharedKeyCypher
+	participant.CommunicationKeyCypher = communicationKeyCypher
+
 	participantJSON, err := json.Marshal(participant)
 	if err != nil {
 		return err
 	}
 
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{participantId})
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{fmt.Sprintf("%d", participantId)})
 	if err != nil {
 		return fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -164,7 +152,7 @@ func (s *MetadataSmartContract) UpdateParticipant(
 	return ctx.GetStub().PutState(compositeKey, participantJSON)
 }
 
-// DeleteAllParticipants deletes all participant records from the world state.
+// DeleteAllParticipants deletes all participant records from the world state. Can only be done by an admin.
 func (s *MetadataSmartContract) DeleteAllParticipants(ctx contractapi.TransactionContextInterface) error {
 	err := adminCheck(ctx)
 	if err != nil {
@@ -177,7 +165,7 @@ func (s *MetadataSmartContract) DeleteAllParticipants(ctx contractapi.Transactio
 	}
 
 	for _, participant := range participants {
-		compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{participant.ParticipantId})
+		compositeKey, err := ctx.GetStub().CreateCompositeKey("participant", []string{fmt.Sprintf("%d", participant.ParticipantId)})
 		if err != nil {
 			return fmt.Errorf("failed creating composite key: %v", err)
 		}
@@ -220,48 +208,49 @@ func (s *MetadataSmartContract) GetAllParticipants(ctx contractapi.TransactionCo
 // THIS SECTION DEALS WITH AGGREGATOR INFORMATION
 // ------------------------------------------------
 
-// AddAggregator issues a new aggregator record to the world state with the given details. Returns the aggregatorId generated for the aggregator.
-func (s *MetadataSmartContract) AddAggregator(ctx contractapi.TransactionContextInterface, communicationKeysCyphersJSON string) (string, error) {
-	MSPID, serialNumber, err := getCreatorInfo(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed getting creator info: %v", err)
-	}
-	aggregatorId := generateID(MSPID, serialNumber)
-
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{aggregatorId})
-	if err != nil {
-		return "", fmt.Errorf("failed creating composite key: %v", err)
-	}
-
+// AddAggregator issues a new aggregator record to the world state with the given details. The record is bound to the client's identity.
+func (s *MetadataSmartContract) AddAggregator(ctx contractapi.TransactionContextInterface, aggregatorId int, communicationKeysCyphersJSON string) error {
 	exists, err := s.AggregatorExists(ctx, aggregatorId)
 	if err != nil {
-		return "", err
+		return err
 	}
 	if exists {
-		return "", fmt.Errorf("the aggregator record for id %s already exists", aggregatorId)
+		return fmt.Errorf("the aggregator record for id %d already exists", aggregatorId)
 	}
 
 	var communicationKeysCyphers map[string]string
 	err = json.Unmarshal([]byte(communicationKeysCyphersJSON), &communicationKeysCyphers)
 	if err != nil {
-		return "", fmt.Errorf("failed unmarshaling communication keys cyphers: %v", err)
+		return fmt.Errorf("failed unmarshaling communication keys cyphers: %v", err)
+	}
+
+	MSPID, serialNumber, err := getCreatorInfo(ctx)
+	if err != nil {
+		return fmt.Errorf("failed getting creator info: %v", err)
 	}
 
 	aggregator := shared.Aggregator{
 		AggregatorId:             aggregatorId,
 		CommunicationKeysCyphers: communicationKeysCyphers,
+		MSPID:                    MSPID,
+		SerialNumber:             serialNumber,
 	}
 	aggregatorJSON, err := json.Marshal(aggregator)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return aggregatorId, ctx.GetStub().PutState(compositeKey, aggregatorJSON)
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{fmt.Sprintf("%d", aggregatorId)})
+	if err != nil {
+		return fmt.Errorf("failed creating composite key: %v", err)
+	}
+
+	return ctx.GetStub().PutState(compositeKey, aggregatorJSON)
 }
 
 // GetAggregator returns the aggregator record stored in the world state for the given aggregatorId.
-func (s *MetadataSmartContract) GetAggregator(ctx contractapi.TransactionContextInterface, aggregatorId string) (*shared.Aggregator, error) {
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{aggregatorId})
+func (s *MetadataSmartContract) GetAggregator(ctx contractapi.TransactionContextInterface, aggregatorId int) (*shared.Aggregator, error) {
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{fmt.Sprintf("%d", aggregatorId)})
 	if err != nil {
 		return nil, fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -271,7 +260,7 @@ func (s *MetadataSmartContract) GetAggregator(ctx contractapi.TransactionContext
 		return nil, fmt.Errorf("failed to read from world state: %v", err)
 	}
 	if aggregatorJSON == nil {
-		return nil, fmt.Errorf("the aggregator record for id %s does not exist", aggregatorId)
+		return nil, fmt.Errorf("the aggregator record for id %d does not exist", aggregatorId)
 	}
 
 	var aggregator shared.Aggregator
@@ -284,8 +273,8 @@ func (s *MetadataSmartContract) GetAggregator(ctx contractapi.TransactionContext
 }
 
 // AggregatorExists returns true when an aggregator record for the given aggregatorId exists in the world state
-func (s *MetadataSmartContract) AggregatorExists(ctx contractapi.TransactionContextInterface, aggregatorId string) (bool, error) {
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{aggregatorId})
+func (s *MetadataSmartContract) AggregatorExists(ctx contractapi.TransactionContextInterface, aggregatorId int) (bool, error) {
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{fmt.Sprintf("%d", aggregatorId)})
 	if err != nil {
 		return false, fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -298,23 +287,15 @@ func (s *MetadataSmartContract) AggregatorExists(ctx contractapi.TransactionCont
 	return aggregatorJSON != nil, nil
 }
 
-// DeleteAggregator deletes a given aggregator record from the world state.
-func (s *MetadataSmartContract) DeleteAggregator(ctx contractapi.TransactionContextInterface) error {
-	MSPID, serialNumber, err := getCreatorInfo(ctx)
-	if err != nil {
-		return fmt.Errorf("failed getting creator info: %v", err)
-	}
-	aggregatorId := generateID(MSPID, serialNumber)
-
-	exists, err := s.AggregatorExists(ctx, aggregatorId)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return fmt.Errorf("the aggregator record for id %s does not exist", aggregatorId)
+// DeleteAggregator deletes a given aggregator record from the world state. Can only be done by the owner of the aggregator or an admin.
+func (s *MetadataSmartContract) DeleteAggregator(ctx contractapi.TransactionContextInterface, aggregatorId int) error {
+	errAdminCheck := adminCheck(ctx)
+	errAggregatorCheck := s.ownerCheckAggregator(ctx, aggregatorId)
+	if errAdminCheck != nil && errAggregatorCheck != nil {
+		return fmt.Errorf("permission denied: client is not an admin or owner of aggregator %d", aggregatorId)
 	}
 
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{aggregatorId})
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{fmt.Sprintf("%d", aggregatorId)})
 	if err != nil {
 		return fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -322,32 +303,27 @@ func (s *MetadataSmartContract) DeleteAggregator(ctx contractapi.TransactionCont
 	return ctx.GetStub().DelState(compositeKey)
 }
 
-// UpdateAggregator updates an existing aggregator record in the world state with provided parameters.
-func (s *MetadataSmartContract) UpdateAggregator(ctx contractapi.TransactionContextInterface, communicationKeysCyphers map[string]string) error {
-	MSPID, serialNumber, err := getCreatorInfo(ctx)
-	if err != nil {
-		return fmt.Errorf("failed getting creator info: %v", err)
+// UpdateAggregator updates an existing aggregator record in the world state with provided parameters. Can only be done by the owner of the aggregator or an admin.
+func (s *MetadataSmartContract) UpdateAggregator(ctx contractapi.TransactionContextInterface, aggregatorId int, communicationKeysCyphers map[string]string) error {
+	errAdminCheck := adminCheck(ctx)
+	errAggregatorCheck := s.ownerCheckAggregator(ctx, aggregatorId)
+	if errAdminCheck != nil && errAggregatorCheck != nil {
+		return fmt.Errorf("permission denied: client is not an admin or owner of aggregator %d", aggregatorId)
 	}
-	aggregatorId := generateID(MSPID, serialNumber)
 
-	exists, err := s.AggregatorExists(ctx, aggregatorId)
+	// overwriting original metadata with new metadata
+	aggregator, err := s.GetAggregator(ctx, aggregatorId)
 	if err != nil {
 		return err
 	}
-	if !exists {
-		return fmt.Errorf("the aggregator record for id %s does not exist", aggregatorId)
-	}
+	aggregator.CommunicationKeysCyphers = communicationKeysCyphers
 
-	aggregator := shared.Aggregator{
-		AggregatorId:             aggregatorId,
-		CommunicationKeysCyphers: communicationKeysCyphers,
-	}
 	aggregatorJSON, err := json.Marshal(aggregator)
 	if err != nil {
 		return err
 	}
 
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{aggregatorId})
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{fmt.Sprintf("%d", aggregatorId)})
 	if err != nil {
 		return fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -355,7 +331,7 @@ func (s *MetadataSmartContract) UpdateAggregator(ctx contractapi.TransactionCont
 	return ctx.GetStub().PutState(compositeKey, aggregatorJSON)
 }
 
-// DeleteAllAggregators deletes all aggregator records from the world state.
+// DeleteAllAggregators deletes all aggregator records from the world state. Can only be done by an admin.
 func (s *MetadataSmartContract) DeleteAllAggregators(ctx contractapi.TransactionContextInterface) error {
 	err := adminCheck(ctx)
 	if err != nil {
@@ -368,7 +344,7 @@ func (s *MetadataSmartContract) DeleteAllAggregators(ctx contractapi.Transaction
 	}
 
 	for _, aggregator := range aggregators {
-		compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{aggregator.AggregatorId})
+		compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator", []string{fmt.Sprintf("%d", aggregator.AggregatorId)})
 		if err != nil {
 			return fmt.Errorf("failed creating composite key: %v", err)
 		}
@@ -411,38 +387,26 @@ func (s *MetadataSmartContract) GetAllAggregators(ctx contractapi.TransactionCon
 // THIS SECTION DEALS WITH PARTICIPANT MODEL UPDATE METADATA
 // ----------------------------------------------------------
 
-// AddParticipantModelMetadata issues a new participant's model update metadata record to the world state with the given details.
+// AddParticipantModelMetadata issues a new participant's model update metadata record to the world state with the given details. Can only be done by the owner of the participant or an admin.
 func (s *MetadataSmartContract) AddParticipantModelMetadata(
 	ctx contractapi.TransactionContextInterface,
+	participantId int,
 	epoch int,
 	modelHashCid string,
 	homomorphicHash string,
 ) error {
-	MSPID, serialNumber, err := getCreatorInfo(ctx)
-	if err != nil {
-		return fmt.Errorf("failed getting creator info: %v", err)
-	}
-	participantId := generateID(MSPID, serialNumber)
-
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
-	if err != nil {
-		return fmt.Errorf("failed creating composite key: %v", err)
-	}
-
-	participantExists, err := s.ParticipantExists(ctx, participantId)
-	if err != nil {
-		return err
-	}
-	if !participantExists {
-		return fmt.Errorf("the participant %s does not exist", participantId)
-	}
-
-	modelExists, err := s.ParticipantModelMetadataExists(ctx, epoch, participantId)
+	modelExists, err := s.ParticipantModelMetadataExists(ctx, participantId, epoch)
 	if err != nil {
 		return err
 	}
 	if modelExists {
-		return fmt.Errorf("the participant model metadata record for epoch %d from participant %s already exists", epoch, participantId)
+		return fmt.Errorf("the participant model metadata record from participant %d for epoch %d already exists", participantId, epoch)
+	}
+
+	errAdminCheck := adminCheck(ctx)
+	errParticipantCheck := s.ownerCheckParticipant(ctx, participantId)
+	if errAdminCheck != nil && errParticipantCheck != nil {
+		return fmt.Errorf("permission denied: client is not an admin or owner of participant %d", participantId)
 	}
 
 	participantModelMetadata := shared.ParticipantModelMetadata{
@@ -456,12 +420,17 @@ func (s *MetadataSmartContract) AddParticipantModelMetadata(
 		return err
 	}
 
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{fmt.Sprintf("%d", participantId), fmt.Sprintf("%d", epoch)})
+	if err != nil {
+		return fmt.Errorf("failed creating composite key: %v", err)
+	}
+
 	return ctx.GetStub().PutState(compositeKey, metadataJSON)
 }
 
-// GetParticipantModelMetadata returns the participant's model update metadata record stored in the world state for the given epoch and participant id.
-func (s *MetadataSmartContract) GetParticipantModelMetadata(ctx contractapi.TransactionContextInterface, epoch int, participantId string) (*shared.ParticipantModelMetadata, error) {
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
+// GetParticipantModelMetadata returns the participant's model update metadata record stored in the world state for the given participantId and epoch.
+func (s *MetadataSmartContract) GetParticipantModelMetadata(ctx contractapi.TransactionContextInterface, participantId int, epoch int) (*shared.ParticipantModelMetadata, error) {
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{fmt.Sprintf("%d", participantId), fmt.Sprintf("%d", epoch)})
 	if err != nil {
 		return nil, fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -471,7 +440,7 @@ func (s *MetadataSmartContract) GetParticipantModelMetadata(ctx contractapi.Tran
 		return nil, fmt.Errorf("failed to read from world state: %v", err)
 	}
 	if metadataJSON == nil {
-		return nil, fmt.Errorf("the participant model metadata record for epoch %d from participant %s does not exist", epoch, participantId)
+		return nil, fmt.Errorf("the participant model metadata record from participant %d for epoch %d does not exist", participantId, epoch)
 	}
 
 	var participantModelMetadata shared.ParticipantModelMetadata
@@ -483,9 +452,9 @@ func (s *MetadataSmartContract) GetParticipantModelMetadata(ctx contractapi.Tran
 	return &participantModelMetadata, nil
 }
 
-// ParticipantModelMetadataExists returns true when a participant model metadata record for the given epoch and participantId exists in the world state
-func (s *MetadataSmartContract) ParticipantModelMetadataExists(ctx contractapi.TransactionContextInterface, epoch int, participantId string) (bool, error) {
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
+// ParticipantModelMetadataExists returns true when a participant model metadata record for the given participantId and epoch exists in the world state.
+func (s *MetadataSmartContract) ParticipantModelMetadataExists(ctx contractapi.TransactionContextInterface, participantId int, epoch int) (bool, error) {
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{fmt.Sprintf("%d", participantId), fmt.Sprintf("%d", epoch)})
 	if err != nil {
 		return false, fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -498,23 +467,23 @@ func (s *MetadataSmartContract) ParticipantModelMetadataExists(ctx contractapi.T
 	return metadataJSON != nil, nil
 }
 
-// DeleteParticipantModelMetadata deletes a given participant model metadata record from the world state.
-func (s *MetadataSmartContract) DeleteParticipantModelMetadata(ctx contractapi.TransactionContextInterface, epoch int) error {
-	MSPID, serialNumber, err := getCreatorInfo(ctx)
-	if err != nil {
-		return fmt.Errorf("failed getting creator info: %v", err)
-	}
-	participantId := generateID(MSPID, serialNumber)
-
-	exists, err := s.ParticipantModelMetadataExists(ctx, epoch, participantId)
+// DeleteParticipantModelMetadata deletes a given participant model metadata record from the world state. Can only be done by the owner of the participant or an admin.
+func (s *MetadataSmartContract) DeleteParticipantModelMetadata(ctx contractapi.TransactionContextInterface, participantId int, epoch int) error {
+	modelExists, err := s.ParticipantModelMetadataExists(ctx, participantId, epoch)
 	if err != nil {
 		return err
 	}
-	if !exists {
-		return fmt.Errorf("the participant model metadata record for epoch %d from participant %s does not exist", epoch, participantId)
+	if modelExists {
+		return fmt.Errorf("the participant model metadata record from participant %d for epoch %d already exists", participantId, epoch)
 	}
 
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
+	errAdminCheck := adminCheck(ctx)
+	errParticipantCheck := s.ownerCheckParticipant(ctx, participantId)
+	if errAdminCheck != nil && errParticipantCheck != nil {
+		return fmt.Errorf("permission denied: client is not an admin or owner of participant %d", participantId)
+	}
+
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{fmt.Sprintf("%d", participantId), fmt.Sprintf("%d", epoch)})
 	if err != nil {
 		return fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -522,25 +491,26 @@ func (s *MetadataSmartContract) DeleteParticipantModelMetadata(ctx contractapi.T
 	return ctx.GetStub().DelState(compositeKey)
 }
 
-// UpdateParticipantModelMetadata updates an existing participant model metadata record in the world state with provided parameters.
+// UpdateParticipantModelMetadata updates an existing participant model metadata record in the world state with provided parameters. Can only be done by the owner of the participant or an admin.
 func (s *MetadataSmartContract) UpdateParticipantModelMetadata(
 	ctx contractapi.TransactionContextInterface,
+	participantId int,
 	epoch int,
 	modelHashCid string,
 	homomorphicHash string,
 ) error {
-	MSPID, serialNumber, err := getCreatorInfo(ctx)
-	if err != nil {
-		return fmt.Errorf("failed getting creator info: %v", err)
-	}
-	participantId := generateID(MSPID, serialNumber)
-
-	exists, err := s.ParticipantModelMetadataExists(ctx, epoch, participantId)
+	modelExists, err := s.ParticipantModelMetadataExists(ctx, participantId, epoch)
 	if err != nil {
 		return err
 	}
-	if !exists {
-		return fmt.Errorf("the participant model metadata record for epoch %d from participant %s does not exist", epoch, participantId)
+	if modelExists {
+		return fmt.Errorf("the participant model metadata record from participant %d for epoch %d already exists", participantId, epoch)
+	}
+
+	errAdminCheck := adminCheck(ctx)
+	errParticipantCheck := s.ownerCheckParticipant(ctx, participantId)
+	if errAdminCheck != nil && errParticipantCheck != nil {
+		return fmt.Errorf("permission denied: client is not an admin or owner of participant %d", participantId)
 	}
 
 	// overwriting original metadata with new metadata
@@ -555,7 +525,7 @@ func (s *MetadataSmartContract) UpdateParticipantModelMetadata(
 		return err
 	}
 
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{participantId, fmt.Sprintf("%d", epoch)})
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{fmt.Sprintf("%d", participantId), fmt.Sprintf("%d", epoch)})
 	if err != nil {
 		return fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -563,7 +533,7 @@ func (s *MetadataSmartContract) UpdateParticipantModelMetadata(
 	return ctx.GetStub().PutState(compositeKey, metadataJSON)
 }
 
-// DeleteAllParticipantModelMetadata deletes all participant model metadata records from the world state.
+// DeleteAllParticipantModelMetadata deletes all participant model metadata records from the world state. Can only be done by an admin.
 func (s *MetadataSmartContract) DeleteAllParticipantModelMetadata(ctx contractapi.TransactionContextInterface) error {
 	err := adminCheck(ctx)
 	if err != nil {
@@ -576,7 +546,7 @@ func (s *MetadataSmartContract) DeleteAllParticipantModelMetadata(ctx contractap
 	}
 
 	for _, participantModelMetadataBlock := range participantModelMetadataBlocks {
-		compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{participantModelMetadataBlock.ParticipantId, fmt.Sprintf("%d", participantModelMetadataBlock.Epoch)})
+		compositeKey, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata", []string{fmt.Sprintf("%d", participantModelMetadataBlock.ParticipantId), fmt.Sprintf("%d", participantModelMetadataBlock.Epoch)})
 		if err != nil {
 			return fmt.Errorf("failed creating composite key: %v", err)
 		}
@@ -616,8 +586,8 @@ func (s *MetadataSmartContract) GetAllParticipantModelMetadata(ctx contractapi.T
 }
 
 // GetAllParticipantModelMetadataByParticipant returns all participant model metadata records found in the world state created by the participant.
-func (s *MetadataSmartContract) GetAllParticipantModelMetadataByParticipant(ctx contractapi.TransactionContextInterface, participantId string) ([]*shared.ParticipantModelMetadata, error) {
-	resultsIterator, err := ctx.GetStub().GetStateByPartialCompositeKey("participant_model_metadata", []string{participantId})
+func (s *MetadataSmartContract) GetAllParticipantModelMetadataByParticipant(ctx contractapi.TransactionContextInterface, participantId int) ([]*shared.ParticipantModelMetadata, error) {
+	resultsIterator, err := ctx.GetStub().GetStateByPartialCompositeKey("participant_model_metadata", []string{fmt.Sprintf("%d", participantId)})
 	if err != nil {
 		return nil, err
 	}
@@ -674,10 +644,11 @@ func (s *MetadataSmartContract) GetAllParticipantModelMetadataByEpoch(ctx contra
 
 // aggregationCheck checks if all participants have submitted their model metadata records for the epoch that the aggregator is responsible for.
 func (s *MetadataSmartContract) aggregationCheck(ctx contractapi.TransactionContextInterface, aggregatorModelMetadata *shared.AggregatorModelMetadata) error {
-	var missing []string
+	// TODO: Maybe we should skip this check for epoch 1 since it might be the starting model?
+	var missing []int
 	for _, participantId := range aggregatorModelMetadata.ParticipantIds {
 		key, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata",
-			[]string{participantId, fmt.Sprintf("%d", aggregatorModelMetadata.Epoch)})
+			[]string{fmt.Sprintf("%d", participantId), fmt.Sprintf("%d", aggregatorModelMetadata.Epoch)})
 		if err != nil {
 			return err
 		}
@@ -697,41 +668,29 @@ func (s *MetadataSmartContract) aggregationCheck(ctx contractapi.TransactionCont
 	return nil
 }
 
-// AddAggregatorModelMetadata issues a new aggregator's model aggregation metadata record to the world state with the given details.
+// AddAggregatorModelMetadata issues a new aggregator's model aggregation metadata record to the world state with the given details. Can only be done by the owner of the aggregator or an admin.
 func (s *MetadataSmartContract) AddAggregatorModelMetadata(
 	ctx contractapi.TransactionContextInterface,
+	aggregatorId int,
 	epoch int,
 	modelHashCid string,
 	participantIdsJSON string,
 ) error {
-	MSPID, serialNumber, err := getCreatorInfo(ctx)
-	if err != nil {
-		return fmt.Errorf("failed getting creator info: %v", err)
-	}
-	aggregatorId := generateID(MSPID, serialNumber)
-
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{aggregatorId, fmt.Sprintf("%d", epoch)})
-	if err != nil {
-		return fmt.Errorf("failed creating composite key: %v", err)
-	}
-
-	aggregatorExists, err := s.AggregatorExists(ctx, aggregatorId)
-	if err != nil {
-		return err
-	}
-	if !aggregatorExists {
-		return fmt.Errorf("the aggregator does not exist")
-	}
-
 	modelExists, err := s.AggregatorModelMetadataExists(ctx, epoch, aggregatorId)
 	if err != nil {
 		return err
 	}
 	if modelExists {
-		return fmt.Errorf("the aggregator model metadata record for epoch %d already exists", epoch)
+		return fmt.Errorf("the aggregator model metadata record from aggregator %d for epoch %d already exists", aggregatorId, epoch)
 	}
 
-	var participantIds []string
+	errAdminCheck := adminCheck(ctx)
+	errAggregatorCheck := s.ownerCheckAggregator(ctx, aggregatorId)
+	if errAdminCheck != nil && errAggregatorCheck != nil {
+		return fmt.Errorf("permission denied: client is not an admin or owner of aggregator %d", aggregatorId)
+	}
+
+	var participantIds []int
 	err = json.Unmarshal([]byte(participantIdsJSON), &participantIds)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal participant Ids JSON: %v", err)
@@ -754,12 +713,17 @@ func (s *MetadataSmartContract) AddAggregatorModelMetadata(
 		return err
 	}
 
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{fmt.Sprintf("%d", aggregatorId), fmt.Sprintf("%d", epoch)})
+	if err != nil {
+		return fmt.Errorf("failed creating composite key: %v", err)
+	}
+
 	return ctx.GetStub().PutState(compositeKey, metadataJSON)
 }
 
 // GetAggregatorModelMetadata returns the aggregator's model aggregation metadata record stored in the world state for the given epoch.
-func (s *MetadataSmartContract) GetAggregatorModelMetadata(ctx contractapi.TransactionContextInterface, epoch int, aggregatorId string) (*shared.AggregatorModelMetadata, error) {
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{aggregatorId, fmt.Sprintf("%d", epoch)})
+func (s *MetadataSmartContract) GetAggregatorModelMetadata(ctx contractapi.TransactionContextInterface, aggregatorId int, epoch int) (*shared.AggregatorModelMetadata, error) {
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{fmt.Sprintf("%d", aggregatorId), fmt.Sprintf("%d", epoch)})
 	if err != nil {
 		return nil, fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -769,7 +733,7 @@ func (s *MetadataSmartContract) GetAggregatorModelMetadata(ctx contractapi.Trans
 		return nil, fmt.Errorf("failed to read from world state: %v", err)
 	}
 	if metadataJSON == nil {
-		return nil, fmt.Errorf("the aggregator model metadata record for epoch %d does not exist", epoch)
+		return nil, fmt.Errorf("the aggregator model metadata record from aggregator %d for epoch %d does not exist", aggregatorId, epoch)
 	}
 
 	var aggregatorModelMetadata shared.AggregatorModelMetadata
@@ -782,8 +746,8 @@ func (s *MetadataSmartContract) GetAggregatorModelMetadata(ctx contractapi.Trans
 }
 
 // AggregatorModelMetadataExists returns true when an aggregator model metadata record for the given epoch exists in the world state.
-func (s *MetadataSmartContract) AggregatorModelMetadataExists(ctx contractapi.TransactionContextInterface, epoch int, aggregatorId string) (bool, error) {
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{aggregatorId, fmt.Sprintf("%d", epoch)})
+func (s *MetadataSmartContract) AggregatorModelMetadataExists(ctx contractapi.TransactionContextInterface, aggregatorId int, epoch int) (bool, error) {
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{fmt.Sprintf("%d", aggregatorId), fmt.Sprintf("%d", epoch)})
 	if err != nil {
 		return false, fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -796,14 +760,8 @@ func (s *MetadataSmartContract) AggregatorModelMetadataExists(ctx contractapi.Tr
 	return metadataJSON != nil, nil
 }
 
-// DeleteAggregatorModelMetadata deletes a given aggregator model metadata record from the world state.
-func (s *MetadataSmartContract) DeleteAggregatorModelMetadata(ctx contractapi.TransactionContextInterface, epoch int) error {
-	MSPID, serialNumber, err := getCreatorInfo(ctx)
-	if err != nil {
-		return fmt.Errorf("failed getting creator info: %v", err)
-	}
-	aggregatorId := generateID(MSPID, serialNumber)
-
+// DeleteAggregatorModelMetadata deletes a given aggregator model metadata record from the world state. Can only be done by the owner of the aggregator or an admin.
+func (s *MetadataSmartContract) DeleteAggregatorModelMetadata(ctx contractapi.TransactionContextInterface, aggregatorId int, epoch int) error {
 	exists, err := s.AggregatorModelMetadataExists(ctx, epoch, aggregatorId)
 	if err != nil {
 		return err
@@ -812,7 +770,13 @@ func (s *MetadataSmartContract) DeleteAggregatorModelMetadata(ctx contractapi.Tr
 		return fmt.Errorf("the aggregator model metadata record for epoch %d does not exist", epoch)
 	}
 
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{aggregatorId, fmt.Sprintf("%d", epoch)})
+	errAdminCheck := adminCheck(ctx)
+	errAggregatorCheck := s.ownerCheckAggregator(ctx, aggregatorId)
+	if errAdminCheck != nil && errAggregatorCheck != nil {
+		return fmt.Errorf("permission denied: client is not an admin or owner of aggregator %d", aggregatorId)
+	}
+
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{fmt.Sprintf("%d", aggregatorId), fmt.Sprintf("%d", epoch)})
 	if err != nil {
 		return fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -820,28 +784,29 @@ func (s *MetadataSmartContract) DeleteAggregatorModelMetadata(ctx contractapi.Tr
 	return ctx.GetStub().DelState(compositeKey)
 }
 
-// UpdateAggregatorModelMetadata updates an existing aggregator model metadata record in the world state with provided parameters.
+// UpdateAggregatorModelMetadata updates an existing aggregator model metadata record in the world state with provided parameters. Can only be done by the owner of the aggregator or an admin.
 func (s *MetadataSmartContract) UpdateAggregatorModelMetadata(
 	ctx contractapi.TransactionContextInterface,
+	aggregatorId int,
 	epoch int,
 	modelHashCid string,
 	participantIdsJSON string,
 ) error {
-	MSPID, serialNumber, err := getCreatorInfo(ctx)
-	if err != nil {
-		return fmt.Errorf("failed getting creator info: %v", err)
-	}
-	aggregatorId := generateID(MSPID, serialNumber)
-
 	exists, err := s.AggregatorModelMetadataExists(ctx, epoch, aggregatorId)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		return fmt.Errorf("the aggregator model metadata record from %s for epoch %d does not exist", aggregatorId, epoch)
+		return fmt.Errorf("the aggregator model metadata record from %d for epoch %d does not exist", aggregatorId, epoch)
 	}
 
-	var participantIds []string
+	errAdminCheck := adminCheck(ctx)
+	errAggregatorCheck := s.ownerCheckAggregator(ctx, aggregatorId)
+	if errAdminCheck != nil && errAggregatorCheck != nil {
+		return fmt.Errorf("permission denied: client is not an admin or owner of aggregator %d", aggregatorId)
+	}
+
+	var participantIds []int
 	err = json.Unmarshal([]byte(participantIdsJSON), &participantIds)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal participant Ids JSON: %v", err)
@@ -865,7 +830,7 @@ func (s *MetadataSmartContract) UpdateAggregatorModelMetadata(
 		return err
 	}
 
-	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{aggregatorId, fmt.Sprintf("%d", epoch)})
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{fmt.Sprintf("%d", aggregatorId), fmt.Sprintf("%d", epoch)})
 	if err != nil {
 		return fmt.Errorf("failed creating composite key: %v", err)
 	}
@@ -873,7 +838,7 @@ func (s *MetadataSmartContract) UpdateAggregatorModelMetadata(
 	return ctx.GetStub().PutState(compositeKey, metadataJSON)
 }
 
-// DeleteAllAggregatorModelMetadata deletes all aggregator model metadata records from the world state.
+// DeleteAllAggregatorModelMetadata deletes all aggregator model metadata records from the world state. Can only be done by an admin.
 func (s *MetadataSmartContract) DeleteAllAggregatorModelMetadata(ctx contractapi.TransactionContextInterface) error {
 	err := adminCheck(ctx)
 	if err != nil {
@@ -886,7 +851,7 @@ func (s *MetadataSmartContract) DeleteAllAggregatorModelMetadata(ctx contractapi
 	}
 
 	for _, aggregatorModelMetadataBlock := range aggregatorModelMetadataBlocks {
-		compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{aggregatorModelMetadataBlock.AggregatorId, fmt.Sprintf("%d", aggregatorModelMetadataBlock.Epoch)})
+		compositeKey, err := ctx.GetStub().CreateCompositeKey("aggregator_model_metadata", []string{fmt.Sprintf("%d", aggregatorModelMetadataBlock.AggregatorId), fmt.Sprintf("%d", aggregatorModelMetadataBlock.Epoch)})
 		if err != nil {
 			return fmt.Errorf("failed creating composite key: %v", err)
 		}
@@ -926,7 +891,7 @@ func (s *MetadataSmartContract) GetAllAggregatorModelMetadata(ctx contractapi.Tr
 }
 
 // GetAllAggregatorModelMetadataByAggregator returns all aggregator model metadata records found in the world state.
-func (s *MetadataSmartContract) GetAllAggregatorModelMetadataByAggregator(ctx contractapi.TransactionContextInterface, aggregatorId string) ([]*shared.AggregatorModelMetadata, error) {
+func (s *MetadataSmartContract) GetAllAggregatorModelMetadataByAggregator(ctx contractapi.TransactionContextInterface, aggregatorId int) ([]*shared.AggregatorModelMetadata, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByPartialCompositeKey("aggregator_model_metadata", []string{})
 	if err != nil {
 		return nil, err
@@ -957,7 +922,7 @@ func (s *MetadataSmartContract) GetAllAggregatorModelMetadataByAggregator(ctx co
 // THIS SECTION DEALS WITH ACCESSING THE LOGS
 // --------------------------------------------
 
-// GetAllLogs returns the history for all objects in the world state.
+// GetAllLogs returns the history for all objects in the world state. Can only be done by the admin.
 func (s *MetadataSmartContract) GetAllLogs(ctx contractapi.TransactionContextInterface) ([]shared.LogEntry, error) {
 	err := adminCheck(ctx)
 	if err != nil {
@@ -994,7 +959,7 @@ func (s *MetadataSmartContract) GetAllLogs(ctx contractapi.TransactionContextInt
 			}
 
 			entry := shared.LogEntry{
-				TxID:      modification.TxId,
+				TxId:      modification.TxId,
 				Timestamp: modification.Timestamp.String(),
 				IsDelete:  modification.IsDelete,
 				Changes:   record,
@@ -1007,7 +972,7 @@ func (s *MetadataSmartContract) GetAllLogs(ctx contractapi.TransactionContextInt
 	return history, nil
 }
 
-// getAllKeys returns all keys of the objects in the world state.
+// getAllKeys returns all keys of the objects in the world state. Can only be done by the admin.
 func (s *MetadataSmartContract) getAllKeys(ctx contractapi.TransactionContextInterface) ([]string, error) {
 	err := adminCheck(ctx)
 	if err != nil {
@@ -1037,14 +1002,7 @@ func (s *MetadataSmartContract) getAllKeys(ctx contractapi.TransactionContextInt
 // THIS SECTION DEALS WITH UTILITY FUNCTIONS
 // -------------------------------------------
 
-// generateID creates a deterministic ID for a participant or aggregator
-func generateID(MSPID string, serialNumber string) string {
-	data := fmt.Sprintf("%s:%s", MSPID, serialNumber)
-	hash := sha256.Sum256([]byte(data))
-	return hex.EncodeToString(hash[:])
-}
-
-// getCreatorInfo returns the MSPID and serial number of the transaction creator
+// getCreatorInfo returns the MSPID and serial number of the transaction creator.
 func getCreatorInfo(ctx contractapi.TransactionContextInterface) (string, string, error) {
 	MSPID, err := ctx.GetClientIdentity().GetMSPID()
 	if err != nil {
@@ -1060,7 +1018,7 @@ func getCreatorInfo(ctx contractapi.TransactionContextInterface) (string, string
 	return MSPID, serialNumber, nil
 }
 
-// adminCheck checks if the transaction creator is an admin
+// adminCheck checks if the transaction creator is an admin.
 func adminCheck(ctx contractapi.TransactionContextInterface) error {
 	certificate, err := ctx.GetClientIdentity().GetX509Certificate()
 	if err != nil {
@@ -1073,4 +1031,40 @@ func adminCheck(ctx contractapi.TransactionContextInterface) error {
 		}
 	}
 	return fmt.Errorf("client is not an admin")
+}
+
+// ownerCheckParticipant checks if the creator of the participant is the client.
+func (s *MetadataSmartContract) ownerCheckParticipant(ctx contractapi.TransactionContextInterface, participantId int) error {
+	MSPID, serialNumber, err := getCreatorInfo(ctx)
+	if err != nil {
+		return fmt.Errorf("failed getting creator info: %v", err)
+	}
+
+	participant, err := s.GetParticipant(ctx, participantId)
+	if err != nil {
+		return err
+	}
+
+	if participant.MSPID != MSPID || participant.SerialNumber != serialNumber {
+		return fmt.Errorf("client is not the owner of the participant: %d", participantId)
+	}
+	return nil
+}
+
+// ownerCheckAggregator checks if the creator of the aggregator is the client.
+func (s *MetadataSmartContract) ownerCheckAggregator(ctx contractapi.TransactionContextInterface, aggregatorId int) error {
+	MSPID, serialNumber, err := getCreatorInfo(ctx)
+	if err != nil {
+		return fmt.Errorf("failed getting creator info: %v", err)
+	}
+
+	aggregator, err := s.GetAggregator(ctx, aggregatorId)
+	if err != nil {
+		return err
+	}
+
+	if aggregator.MSPID != MSPID || aggregator.SerialNumber != serialNumber {
+		return fmt.Errorf("client is not the owner of the aggregator: %d", aggregatorId)
+	}
+	return nil
 }
