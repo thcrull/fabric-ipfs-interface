@@ -304,7 +304,7 @@ func (s *MetadataSmartContract) DeleteAggregator(ctx contractapi.TransactionCont
 }
 
 // UpdateAggregator updates an existing aggregator record in the world state with provided parameters. Can only be done by the owner of the aggregator or an admin.
-func (s *MetadataSmartContract) UpdateAggregator(ctx contractapi.TransactionContextInterface, aggregatorId int, communicationKeysCyphers map[string]string) error {
+func (s *MetadataSmartContract) UpdateAggregator(ctx contractapi.TransactionContextInterface, aggregatorId int, communicationKeysCyphersJSON string) error {
 	errAdminCheck := adminCheck(ctx)
 	errAggregatorCheck := s.ownerCheckAggregator(ctx, aggregatorId)
 	if errAdminCheck != nil && errAggregatorCheck != nil {
@@ -316,6 +316,13 @@ func (s *MetadataSmartContract) UpdateAggregator(ctx contractapi.TransactionCont
 	if err != nil {
 		return err
 	}
+
+	var communicationKeysCyphers map[string]string
+	err = json.Unmarshal([]byte(communicationKeysCyphersJSON), &communicationKeysCyphers)
+	if err != nil {
+		return fmt.Errorf("failed unmarshaling communication keys cyphers: %v", err)
+	}
+
 	aggregator.CommunicationKeysCyphers = communicationKeysCyphers
 
 	aggregatorJSON, err := json.Marshal(aggregator)

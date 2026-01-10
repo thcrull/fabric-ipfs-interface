@@ -2,6 +2,7 @@ package fabricclient
 
 import (
 	"os"
+	"strconv"
 	"testing"
 )
 
@@ -181,9 +182,9 @@ func TestGeneral(t *testing.T) {
 
 	// Admin = Aggregator
 	aggregatorId := 4
-	err = testMetadataServiceAdmin.AddAggregator(aggregatorId, map[int]string{
-		thomasId: "key-thomas-communication-key-cypher",
-		mihneaId: "key-mihnea-communication-key-cypher",
+	err = testMetadataServiceAdmin.AddAggregator(aggregatorId, map[string]string{
+		strconv.Itoa(thomasId): "key-thomas-communication-key-cypher",
+		strconv.Itoa(mihneaId): "key-mihnea-communication-key-cypher",
 	})
 	if err != nil {
 		t.Fatalf("Failed to add aggregator Aggregator: %v", err)
@@ -192,8 +193,8 @@ func TestGeneral(t *testing.T) {
 
 	// User1 = BadAggregator
 	badAggregatorId := 5
-	err = testMetadataServiceUser1.AddAggregator(badAggregatorId, map[int]string{
-		ilincaId: "key-ilinca-communication-key-cypher",
+	err = testMetadataServiceUser1.AddAggregator(badAggregatorId, map[string]string{
+		strconv.Itoa(ilincaId): "key-ilinca-communication-key-cypher",
 	})
 	if err != nil {
 		t.Fatalf("Failed to add aggregator BadAggregator: %v", err)
@@ -208,9 +209,9 @@ func TestGeneral(t *testing.T) {
 	t.Logf("Fetched aggregator Aggregator: %+v", aggregator)
 
 	// Update aggregator Aggregator
-	err = testMetadataServiceAdmin.UpdateAggregator(aggregatorId, map[int]string{
-		thomasId: "key-thomas-communication-key-cypher-updated",
-		mihneaId: "key-mihnea-communication-key-cypher-updated",
+	err = testMetadataServiceAdmin.UpdateAggregator(aggregatorId, map[string]string{
+		strconv.Itoa(thomasId): "key-thomas-communication-key-cypher-updated",
+		strconv.Itoa(mihneaId): "key-mihnea-communication-key-cypher-updated",
 	})
 	if err != nil {
 		t.Fatalf("Failed to update aggregator Aggregator: %v", err)

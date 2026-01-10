@@ -118,7 +118,7 @@ func (s *MetadataService) GetAllParticipants() ([]shared.Participant, error) {
 
 // AddAggregator submits a transaction to add a new aggregator record. The aggregator record will be bound to the caller's identity,
 // thus changes made to the record can only be done by the creator or an admin.
-func (s *MetadataService) AddAggregator(aggregatorId int, communicationKeysCyphers map[int]string) error {
+func (s *MetadataService) AddAggregator(aggregatorId int, communicationKeysCyphers map[string]string) error {
 	aggregatorIdStr := strconv.Itoa(aggregatorId)
 
 	var communicationKeysCyphersJSON, err = json.Marshal(communicationKeysCyphers)
@@ -173,7 +173,7 @@ func (s *MetadataService) DeleteAggregator(aggregatorId int) error {
 }
 
 // UpdateAggregator updates the caller's aggregator record. Can only be done by the aggregator's creator or an admin.
-func (s *MetadataService) UpdateAggregator(aggregatorId int, communicationKeysCyphers map[int]string) error {
+func (s *MetadataService) UpdateAggregator(aggregatorId int, communicationKeysCyphers map[string]string) error {
 	aggregatorIdStr := strconv.Itoa(aggregatorId)
 	var communicationKeysCyphersJSON, err = json.Marshal(communicationKeysCyphers)
 	if err != nil {

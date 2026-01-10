@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"strconv"
 	"time"
 
 	fabricclient "github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/wrapper"
@@ -70,8 +71,8 @@ func main() {
 	// 3. Add an aggregator to the Fabric network
 	//---------------------------------------------
 	aggregatorId := 20
-	err = metadataService.AddAggregator(aggregatorId, map[int]string{
-		aggregatorId: "participant-comm-key",
+	err = metadataService.AddAggregator(aggregatorId, map[string]string{
+		strconv.Itoa(aggregatorId): "participant-comm-key",
 	})
 	if err != nil {
 		log.Fatalf("error adding aggregator: %v", err)
