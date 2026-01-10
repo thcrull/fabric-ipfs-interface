@@ -29,63 +29,69 @@ func NewMetadataService(configPath string) (*MetadataService, error) {
 // THIS SECTION IS FOR THE PARTICIPANT'S FUNCTIONALITIES
 // ---------------------------------------------------------------------------
 
-// AddParticipant submits a transaction to add a new participant record. The new participant will be bound to the caller of the transaction. It returns the participant id generated from the MSPID and SerialNumber of the caller.
-func (s *MetadataService) AddParticipant(encapsulatedKey string, homomorphicSharedKeyCypher string, communicationKeyCypher string) (string, error) {
-	var participantId string
+// AddParticipant submits a transaction to add a new participant record. The participant record will be bound to the caller's identity,
+// thus changes made to the record can only be done by the creator or an admin.
+func (s *MetadataService) AddParticipant(participantId int, encapsulatedKey string, homomorphicSharedKeyCypher string, communicationKeyCypher string) error {
+	participantIdStr := strconv.Itoa(participantId)
 
-	err := s.client.SubmitTransaction(&participantId, "AddParticipant", encapsulatedKey, homomorphicSharedKeyCypher, communicationKeyCypher)
+	err := s.client.SubmitTransaction(nil, "AddParticipant", participantIdStr, encapsulatedKey, homomorphicSharedKeyCypher, communicationKeyCypher)
 	if err != nil {
-		return "", fmt.Errorf("failed to add participant record: %w", err)
+		return fmt.Errorf("failed to add participant record for id %d: %w", participantId, err)
 	}
 
-	return participantId, nil
+	return nil
 }
 
-// GetParticipant retrieves a participant record by id
-func (s *MetadataService) GetParticipant(participantId string) (*shared.Participant, error) {
+// GetParticipant retrieves a participant record by id. Can be done by anyone.
+func (s *MetadataService) GetParticipant(participantId int) (*shared.Participant, error) {
+	participantIdStr := strconv.Itoa(participantId)
 	var participant shared.Participant
 
-	err := s.client.EvaluateTransaction(&participant, "GetParticipant", participantId)
+	err := s.client.EvaluateTransaction(&participant, "GetParticipant", participantIdStr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query the participant record: %w", err)
+		return nil, fmt.Errorf("failed to query the participant record for id %d: %w", participantId, err)
 	}
 
 	return &participant, nil
 }
 
-// ParticipantExists returns true if a participant record exists
-func (s *MetadataService) ParticipantExists(participantId string) (bool, error) {
+// ParticipantExists returns true if a participant record exists. Can be done by anyone.
+func (s *MetadataService) ParticipantExists(participantId int) (bool, error) {
+	participantIdStr := strconv.Itoa(participantId)
 	var exists bool
 
-	err := s.client.EvaluateTransaction(&exists, "ParticipantExists", participantId)
+	err := s.client.EvaluateTransaction(&exists, "ParticipantExists", participantIdStr)
 	if err != nil {
-		return false, fmt.Errorf("failed to query if participant record exists: %w", err)
+		return false, fmt.Errorf("failed to query if participant record exists for id %d: %w", participantId, err)
 	}
 
 	return exists, nil
 }
 
-// DeleteParticipant deletes the caller's participant record, returns nil if successful
-func (s *MetadataService) DeleteParticipant() error {
-	err := s.client.SubmitTransaction(nil, "DeleteParticipant")
+// DeleteParticipant deletes the participant record, returns nil if successful. Can only be done by the participant's creator or an admin.
+func (s *MetadataService) DeleteParticipant(participantId int) error {
+	participantIdStr := strconv.Itoa(participantId)
+	err := s.client.SubmitTransaction(nil, "DeleteParticipant", participantIdStr)
 	if err != nil {
-		return fmt.Errorf("failed to delete participant record: %w", err)
+		return fmt.Errorf("failed to delete participant record for id %d: %w", participantId, err)
 	}
 
 	return nil
 }
 
-// UpdateParticipant updates the caller's participant record
-func (s *MetadataService) UpdateParticipant(encapsulatedKey string, homomorphicSharedKeyCypher string, communicationKeyCypher string) error {
-	err := s.client.SubmitTransaction(nil, "UpdateParticipant", encapsulatedKey, homomorphicSharedKeyCypher, communicationKeyCypher)
+// UpdateParticipant updates the caller's participant record. Can only be done by the participant's creator or an admin.
+func (s *MetadataService) UpdateParticipant(participantId int, encapsulatedKey string, homomorphicSharedKeyCypher string, communicationKeyCypher string) error {
+	participantIdStr := strconv.Itoa(participantId)
+
+	err := s.client.SubmitTransaction(nil, "UpdateParticipant", participantIdStr, encapsulatedKey, homomorphicSharedKeyCypher, communicationKeyCypher)
 	if err != nil {
-		return fmt.Errorf("failed to update participant record: %w", err)
+		return fmt.Errorf("failed to update participant record for id %d: %w", participantId, err)
 	}
 
 	return nil
 }
 
-// DeleteAllParticipants deletes all participant records, returns nil if successful. Only the admin can delete all participants records.
+// DeleteAllParticipants deletes all participant records, returns nil if successful. Only the admin can delete all participant records.
 func (s *MetadataService) DeleteAllParticipants() error {
 	err := s.client.SubmitTransaction(nil, "DeleteAllParticipants")
 	if err != nil {
@@ -95,7 +101,7 @@ func (s *MetadataService) DeleteAllParticipants() error {
 	return nil
 }
 
-// GetAllParticipants queries all participant records from the ledger
+// GetAllParticipants queries all participant records from the ledger. Can be done by anyone.
 func (s *MetadataService) GetAllParticipants() ([]shared.Participant, error) {
 	var participantsList []shared.Participant
 
@@ -110,65 +116,71 @@ func (s *MetadataService) GetAllParticipants() ([]shared.Participant, error) {
 // THIS SECTION IS FOR THE AGGREGATOR'S FUNCTIONALITIES
 // -----------------------------------------------------
 
-// AddAggregator submits a transaction to add a new aggregator record. The new aggregator will be bound to the caller of the transaction. It returns the aggregator id generated from the MSPID and SerialNumber of the caller.
-func (s *MetadataService) AddAggregator(communicationKeysCyphers map[string]string) (string, error) {
-	var communicationKeysCyphersJSON, err = json.Marshal(communicationKeysCyphers)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal communication keys cyphers JSON: %w", err)
-	}
+// AddAggregator submits a transaction to add a new aggregator record. The aggregator record will be bound to the caller's identity,
+// thus changes made to the record can only be done by the creator or an admin.
+func (s *MetadataService) AddAggregator(aggregatorId int, communicationKeysCyphers map[string]string) error {
+	aggregatorIdStr := strconv.Itoa(aggregatorId)
 
-	var aggregatorId string
-
-	err = s.client.SubmitTransaction(&aggregatorId, "AddAggregator", string(communicationKeysCyphersJSON))
-	if err != nil {
-		return "", fmt.Errorf("failed to add aggregator record: %w", err)
-	}
-
-	return aggregatorId, nil
-}
-
-// GetAggregator retrieves an aggregator record by id
-func (s *MetadataService) GetAggregator(aggregatorId string) (*shared.Aggregator, error) {
-	var aggregator shared.Aggregator
-
-	err := s.client.EvaluateTransaction(&aggregator, "GetAggregator", aggregatorId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query the aggregator record: %w", err)
-	}
-
-	return &aggregator, nil
-}
-
-// AggregatorExists returns true if an aggregator record exists
-func (s *MetadataService) AggregatorExists(aggregatorId string) (bool, error) {
-	var exists bool
-
-	err := s.client.EvaluateTransaction(&exists, "AggregatorExists", aggregatorId)
-	if err != nil {
-		return false, fmt.Errorf("failed to query if aggregator record exists: %w", err)
-	}
-
-	return exists, nil
-}
-
-// DeleteAggregator deletes the caller's aggregator record, returns nil if successful
-func (s *MetadataService) DeleteAggregator() error {
-	err := s.client.SubmitTransaction(nil, "DeleteAggregator")
-	if err != nil {
-		return fmt.Errorf("failed to delete aggregator record: %w", err)
-	}
-
-	return nil
-}
-
-// UpdateAggregator updates the caller's aggregator record
-func (s *MetadataService) UpdateAggregator(communicationKeysCyphers map[string]string) error {
 	var communicationKeysCyphersJSON, err = json.Marshal(communicationKeysCyphers)
 	if err != nil {
 		return fmt.Errorf("failed to marshal communication keys cyphers JSON: %w", err)
 	}
 
-	err = s.client.SubmitTransaction(nil, "UpdateAggregator", string(communicationKeysCyphersJSON))
+	err = s.client.SubmitTransaction(nil, "AddAggregator", aggregatorIdStr, string(communicationKeysCyphersJSON))
+	if err != nil {
+		return fmt.Errorf("failed to add aggregator record for id %d: %w", aggregatorId, err)
+	}
+
+	return nil
+}
+
+// GetAggregator retrieves an aggregator record by id.Can be done by anyone.
+func (s *MetadataService) GetAggregator(aggregatorId int) (*shared.Aggregator, error) {
+	aggregatorIdStr := strconv.Itoa(aggregatorId)
+	var aggregator shared.Aggregator
+
+	err := s.client.EvaluateTransaction(&aggregator, "GetAggregator", aggregatorIdStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query the aggregator record for id %d: %w", aggregatorId, err)
+	}
+
+	return &aggregator, nil
+}
+
+// AggregatorExists returns true if an aggregator record exists. Can be done by anyone.
+func (s *MetadataService) AggregatorExists(aggregatorId int) (bool, error) {
+	aggregatorIdStr := strconv.Itoa(aggregatorId)
+	var exists bool
+
+	err := s.client.EvaluateTransaction(&exists, "AggregatorExists", aggregatorIdStr)
+	if err != nil {
+		return false, fmt.Errorf("failed to query if aggregator record exists for id %d: %w", aggregatorId, err)
+	}
+
+	return exists, nil
+}
+
+// DeleteAggregator deletes the aggregator record, returns nil if successful. Can be done only by the aggregator's creator or an admin.
+func (s *MetadataService) DeleteAggregator(aggregatorId int) error {
+	aggregatorIdStr := strconv.Itoa(aggregatorId)
+
+	err := s.client.SubmitTransaction(nil, "DeleteAggregator", aggregatorIdStr)
+	if err != nil {
+		return fmt.Errorf("failed to delete aggregator record for id %d: %w", aggregatorId, err)
+	}
+
+	return nil
+}
+
+// UpdateAggregator updates the caller's aggregator record. Can only be done by the aggregator's creator or an admin.
+func (s *MetadataService) UpdateAggregator(aggregatorId int, communicationKeysCyphers map[string]string) error {
+	aggregatorIdStr := strconv.Itoa(aggregatorId)
+	var communicationKeysCyphersJSON, err = json.Marshal(communicationKeysCyphers)
+	if err != nil {
+		return fmt.Errorf("failed to marshal communication keys cyphers JSON: %w", err)
+	}
+
+	err = s.client.SubmitTransaction(nil, "UpdateAggregator", aggregatorIdStr, string(communicationKeysCyphersJSON))
 	if err != nil {
 		return fmt.Errorf("failed to update aggregator record: %w", err)
 	}
@@ -176,7 +188,7 @@ func (s *MetadataService) UpdateAggregator(communicationKeysCyphers map[string]s
 	return nil
 }
 
-// DeleteAllAggregators deletes all aggregator records, returns nil if successful. Only the admin can delete all aggregators records.
+// DeleteAllAggregators deletes all aggregator records, returns nil if successful. Only the admin can delete all aggregator records.
 func (s *MetadataService) DeleteAllAggregators() error {
 	err := s.client.SubmitTransaction(nil, "DeleteAllAggregators")
 	if err != nil {
@@ -186,7 +198,7 @@ func (s *MetadataService) DeleteAllAggregators() error {
 	return nil
 }
 
-// GetAllAggregators queries all aggregator records from the ledger
+// GetAllAggregators queries all aggregator records from the ledger. Can be done by anyone.
 func (s *MetadataService) GetAllAggregators() ([]shared.Aggregator, error) {
 	var aggregatorsList []shared.Aggregator
 
@@ -201,61 +213,68 @@ func (s *MetadataService) GetAllAggregators() ([]shared.Aggregator, error) {
 // THIS SECTION IS FOR THE PARTICIPANT MODEL METADATA RECORDS' FUNCTIONALITIES
 // ---------------------------------------------------------------------------
 
-// AddParticipantModelMetadata submits a transaction to add a new metadata record for a participant's model. The model can only be for the caller's participant.
-func (s *MetadataService) AddParticipantModelMetadata(epoch int, modelHashCid string, homomorphicHash string) error {
+// AddParticipantModelMetadata submits a transaction to add a new metadata record for a participant's model.
+// Only the owner of the participant record or an admin can add a new metadata record for the participant's id.
+// The metadata record will be bound to the caller's identity, thus changes made to the record can only be done by the creator or an admin.
+func (s *MetadataService) AddParticipantModelMetadata(participantId int, epoch int, modelHashCid string, homomorphicHash string) error {
+	participantIdStr := strconv.Itoa(participantId)
 	epochStr := strconv.Itoa(epoch)
 
-	err := s.client.SubmitTransaction(nil, "AddParticipantModelMetadata", epochStr, modelHashCid, homomorphicHash)
+	err := s.client.SubmitTransaction(nil, "AddParticipantModelMetadata", participantIdStr, epochStr, modelHashCid, homomorphicHash)
 	if err != nil {
-		return fmt.Errorf("failed to add participant model metadata record: %w", err)
+		return fmt.Errorf("failed to add participant model metadata record for participant id %d and epoch %d: %w", participantId, epoch, err)
 	}
 
 	return nil
 }
 
-// GetParticipantModelMetadata retrieves a participant model metadata record by epoch and participantId
-func (s *MetadataService) GetParticipantModelMetadata(epoch int, participantId string) (*shared.ParticipantModelMetadata, error) {
+// GetParticipantModelMetadata retrieves a participant model metadata record by participantId and epoch. Can be done by anyone.
+func (s *MetadataService) GetParticipantModelMetadata(participantId int, epoch int) (*shared.ParticipantModelMetadata, error) {
+	participantIdStr := strconv.Itoa(participantId)
 	epochStr := strconv.Itoa(epoch)
 	var participantModelMetadata shared.ParticipantModelMetadata
 
-	err := s.client.EvaluateTransaction(&participantModelMetadata, "GetParticipantModelMetadata", epochStr, participantId)
+	err := s.client.EvaluateTransaction(&participantModelMetadata, "GetParticipantModelMetadata", participantIdStr, epochStr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query the participant model metadata record: %w", err)
+		return nil, fmt.Errorf("failed to query the participant model metadata record for participant id %d and epoch %d: %w", participantId, epoch, err)
 	}
 
 	return &participantModelMetadata, nil
 }
 
-// ParticipantModelMetadataExists returns true if a participant model metadata record exists
-func (s *MetadataService) ParticipantModelMetadataExists(epoch int, participantId string) (bool, error) {
+// ParticipantModelMetadataExists returns true if a participant model metadata record exists. Can be done by anyone.
+func (s *MetadataService) ParticipantModelMetadataExists(participantId int, epoch int) (bool, error) {
+	participantIdStr := strconv.Itoa(participantId)
 	epochStr := strconv.Itoa(epoch)
 	var exists bool
 
-	err := s.client.EvaluateTransaction(&exists, "ParticipantModelMetadataExists", epochStr, participantId)
+	err := s.client.EvaluateTransaction(&exists, "ParticipantModelMetadataExists", participantIdStr, epochStr)
 	if err != nil {
-		return false, fmt.Errorf("failed to query if participant model metadata record exists: %w", err)
+		return false, fmt.Errorf("failed to query if participant model metadata record exists for participant id %d and epoch %d: %w", participantId, epoch, err)
 	}
 
 	return exists, nil
 }
 
-// DeleteParticipantModelMetadata deletes a participant model metadata record, returns nil if successful. Can only delete records made by the caller's participant.
-func (s *MetadataService) DeleteParticipantModelMetadata(epoch int) error {
+// DeleteParticipantModelMetadata deletes a participant model metadata record, returns nil if successful. Can be done only by the record's owner or an admin.
+func (s *MetadataService) DeleteParticipantModelMetadata(participantId int, epoch int) error {
+	participantIdStr := strconv.Itoa(participantId)
 	epochStr := strconv.Itoa(epoch)
 
-	err := s.client.SubmitTransaction(nil, "DeleteParticipantModelMetadata", epochStr)
+	err := s.client.SubmitTransaction(nil, "DeleteParticipantModelMetadata", participantIdStr, epochStr)
 	if err != nil {
-		return fmt.Errorf("failed to delete participant model metadata record: %w", err)
+		return fmt.Errorf("failed to delete participant model metadata record for participant id %d and epoch %d: %w", participantId, epoch, err)
 	}
 
 	return nil
 }
 
-// UpdateParticipantModelMetadata updates an existing participant model metadata record. Can only update records made by the caller's participant.
-func (s *MetadataService) UpdateParticipantModelMetadata(epoch int, modelHashCid string, homomorphicHash string) error {
+// UpdateParticipantModelMetadata updates an existing participant model metadata record. Can be done only by the record's owner or an admin.
+func (s *MetadataService) UpdateParticipantModelMetadata(participantId int, epoch int, modelHashCid string, homomorphicHash string) error {
+	participantIdStr := strconv.Itoa(participantId)
 	epochStr := strconv.Itoa(epoch)
 
-	err := s.client.SubmitTransaction(nil, "UpdateParticipantModelMetadata", epochStr, modelHashCid, homomorphicHash)
+	err := s.client.SubmitTransaction(nil, "UpdateParticipantModelMetadata", participantIdStr, epochStr, modelHashCid, homomorphicHash)
 	if err != nil {
 		return fmt.Errorf("failed to update participant model metadata record: %w", err)
 	}
@@ -273,7 +292,7 @@ func (s *MetadataService) DeleteAllParticipantModelMetadata() error {
 	return nil
 }
 
-// GetAllParticipantModelMetadata queries all participant model metadata records from the ledger made by any participant on any epoch
+// GetAllParticipantModelMetadata queries all participant model metadata records from the ledger made by any participant on any epoch. Can be done by anyone.
 func (s *MetadataService) GetAllParticipantModelMetadata() ([]shared.ParticipantModelMetadata, error) {
 	var participantModelMetadataList []shared.ParticipantModelMetadata
 
@@ -284,26 +303,27 @@ func (s *MetadataService) GetAllParticipantModelMetadata() ([]shared.Participant
 	return participantModelMetadataList, nil
 }
 
-// GetAllParticipantModelMetadataByParticipant queries all participant model metadata records from the ledger made by the participant for any epoch
-func (s *MetadataService) GetAllParticipantModelMetadataByParticipant(participantId string) ([]shared.ParticipantModelMetadata, error) {
+// GetAllParticipantModelMetadataByParticipant queries all participant model metadata records from the ledger made by the participant for any epoch. Can be done by anyone.
+func (s *MetadataService) GetAllParticipantModelMetadataByParticipant(participantId int) ([]shared.ParticipantModelMetadata, error) {
+	participantIdStr := strconv.Itoa(participantId)
 	var participantModelMetadataList []shared.ParticipantModelMetadata
 
-	err := s.client.EvaluateTransaction(&participantModelMetadataList, "GetAllParticipantModelMetadataByParticipant", participantId)
+	err := s.client.EvaluateTransaction(&participantModelMetadataList, "GetAllParticipantModelMetadataByParticipant", participantIdStr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query the participant model metadata records: %w", err)
+		return nil, fmt.Errorf("failed to query the participant model metadata records by participant id %d: %w", participantId, err)
 	}
 
 	return participantModelMetadataList, nil
 }
 
-// GetAllParticipantModelMetadataByEpoch queries all participant model metadata records from the ledger made by any participants for the epoch
+// GetAllParticipantModelMetadataByEpoch queries all participant model metadata records from the ledger made by any participants for the epoch. Can be done by anyone.
 func (s *MetadataService) GetAllParticipantModelMetadataByEpoch(epoch int) ([]shared.ParticipantModelMetadata, error) {
 	epochStr := strconv.Itoa(epoch)
 	var participantModelMetadataList []shared.ParticipantModelMetadata
 
 	err := s.client.EvaluateTransaction(&participantModelMetadataList, "GetAllParticipantModelMetadataByEpoch", epochStr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query the participant model metadata records: %w", err)
+		return nil, fmt.Errorf("failed to query the participant model metadata records by epoch %d: %w", epoch, err)
 	}
 
 	return participantModelMetadataList, nil
@@ -313,71 +333,77 @@ func (s *MetadataService) GetAllParticipantModelMetadataByEpoch(epoch int) ([]sh
 // THIS SECTION IS FOR THE AGGREGATOR MODEL METADATA RECORDS' FUNCTIONALITIES
 // ---------------------------------------------------------------------------
 
-// AddAggregatorModelMetadata submits a transaction to add a new aggregator model metadata record. The model can only be for the caller's aggregator.
-func (s *MetadataService) AddAggregatorModelMetadata(epoch int, modelHashCid string, participantIds []string) error {
+// AddAggregatorModelMetadata submits a transaction to add a new aggregator model metadata record.
+// Only the owner of the aggregator record or an admin can add a new metadata record for the aggregator's id.
+// The metadata record will be bound to the caller's identity, thus changes made to the record can only be done by the creator or an admin.
+func (s *MetadataService) AddAggregatorModelMetadata(aggregatorId int, epoch int, modelHashCid string, participantIds []string) error {
+	aggregatorIdStr := strconv.Itoa(aggregatorId)
 	epochStr := strconv.Itoa(epoch)
 	var participantIdsJSON, err = json.Marshal(participantIds)
 	if err != nil {
 		return fmt.Errorf("failed to marshal participant ids JSON: %w", err)
 	}
 
-	err = s.client.SubmitTransaction(nil, "AddAggregatorModelMetadata", epochStr, modelHashCid, string(participantIdsJSON))
+	err = s.client.SubmitTransaction(nil, "AddAggregatorModelMetadata", aggregatorIdStr, epochStr, modelHashCid, string(participantIdsJSON))
 	if err != nil {
-		return fmt.Errorf("failed to add aggregator model metadata record: %w", err)
+		return fmt.Errorf("failed to add aggregator model metadata record for aggregator id %d and epoch %d: %w", aggregatorId, epoch, err)
 	}
 
 	return nil
 }
 
-// GetAggregatorModelMetadata retrieves an aggregator model metadata record by epoch
-func (s *MetadataService) GetAggregatorModelMetadata(aggregatorId string, epoch int) (*shared.AggregatorModelMetadata, error) {
+// GetAggregatorModelMetadata retrieves an aggregator model metadata record by aggregatorId and epoch. Can be done by anyone.
+func (s *MetadataService) GetAggregatorModelMetadata(aggregatorId int, epoch int) (*shared.AggregatorModelMetadata, error) {
+	aggregatorIdStr := strconv.Itoa(aggregatorId)
 	epochStr := strconv.Itoa(epoch)
 	var aggregatorModelMetadata shared.AggregatorModelMetadata
 
-	err := s.client.EvaluateTransaction(&aggregatorModelMetadata, "GetAggregatorModelMetadata", epochStr, aggregatorId)
+	err := s.client.EvaluateTransaction(&aggregatorModelMetadata, "GetAggregatorModelMetadata", aggregatorIdStr, epochStr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query the aggregator model metadata record: %w", err)
+		return nil, fmt.Errorf("failed to query the aggregator model metadata record for aggregator id %d and epoch %d: %w", aggregatorId, epoch, err)
 	}
 
 	return &aggregatorModelMetadata, nil
 }
 
-// AggregatorModelMetadataExists returns true if an aggregator model metadata record exists
-func (s *MetadataService) AggregatorModelMetadataExists(epoch int, aggregatorId string) (bool, error) {
+// AggregatorModelMetadataExists returns true if an aggregator model metadata record exists. Can be done by anyone.
+func (s *MetadataService) AggregatorModelMetadataExists(aggregatorId int, epoch int) (bool, error) {
+	aggregatorIdStr := strconv.Itoa(aggregatorId)
 	epochStr := strconv.Itoa(epoch)
 	var exists bool
 
-	err := s.client.EvaluateTransaction(&exists, "AggregatorModelMetadataExists", epochStr, aggregatorId)
+	err := s.client.EvaluateTransaction(&exists, "AggregatorModelMetadataExists", aggregatorIdStr, epochStr)
 	if err != nil {
-		return false, fmt.Errorf("failed to query if aggregator model metadata record exists: %w", err)
+		return false, fmt.Errorf("failed to query if aggregator model metadata record exists for aggregator id %d and epoch %d: %w", aggregatorId, epoch, err)
 	}
 
 	return exists, nil
 }
 
-// DeleteAggregatorModelMetadata deletes an aggregator model metadata record, returns nil if successful. Can only delete records made by the caller's aggregator.
-func (s *MetadataService) DeleteAggregatorModelMetadata(epoch int) error {
+// DeleteAggregatorModelMetadata deletes an aggregator model metadata record, returns nil if successful. Can be done only by the record's owner or an admin.
+func (s *MetadataService) DeleteAggregatorModelMetadata(aggregatorId int, epoch int) error {
 	epochStr := strconv.Itoa(epoch)
 
 	err := s.client.SubmitTransaction(nil, "DeleteAggregatorModelMetadata", epochStr)
 	if err != nil {
-		return fmt.Errorf("failed to delete aggregator model metadata record: %w", err)
+		return fmt.Errorf("failed to delete aggregator model metadata record for aggregator id %d and epoch %d: %w", aggregatorId, epoch, err)
 	}
 
 	return nil
 }
 
-// UpdateAggregatorModelMetadata updates an existing aggregator model metadata record. Can only update records made by the caller's aggregator.
-func (s *MetadataService) UpdateAggregatorModelMetadata(epoch int, modelHashCid string, participantIds []string) error {
+// UpdateAggregatorModelMetadata updates an existing aggregator model metadata record. Can be done only by the record's owner or an admin.
+func (s *MetadataService) UpdateAggregatorModelMetadata(aggregatorId int, epoch int, modelHashCid string, participantIds []string) error {
+	aggregatorIdStr := strconv.Itoa(aggregatorId)
 	epochStr := strconv.Itoa(epoch)
 	var participantIdsJSON, err = json.Marshal(participantIds)
 	if err != nil {
 		return fmt.Errorf("failed to marshal participant ids JSON: %w", err)
 	}
 
-	err = s.client.SubmitTransaction(nil, "UpdateAggregatorModelMetadata", epochStr, modelHashCid, string(participantIdsJSON))
+	err = s.client.SubmitTransaction(nil, "UpdateAggregatorModelMetadata", aggregatorIdStr, epochStr, modelHashCid, string(participantIdsJSON))
 	if err != nil {
-		return fmt.Errorf("failed to update aggregator model metadata record: %w", err)
+		return fmt.Errorf("failed to update aggregator model metadata record for aggregator id %d and epoch %d: %w", aggregatorId, epoch, err)
 	}
 
 	return nil
@@ -393,7 +419,7 @@ func (s *MetadataService) DeleteAllAggregatorModelMetadata() error {
 	return nil
 }
 
-// GetAllAggregatorModelMetadata queries the aggregators' model metadata records from the ledger for all epochs
+// GetAllAggregatorModelMetadata queries the aggregators' model metadata records from the ledger for all epochs. Can be done by anyone.
 func (s *MetadataService) GetAllAggregatorModelMetadata() ([]shared.AggregatorModelMetadata, error) {
 	var aggregatorModelMetadataList []shared.AggregatorModelMetadata
 
@@ -404,13 +430,14 @@ func (s *MetadataService) GetAllAggregatorModelMetadata() ([]shared.AggregatorMo
 	return aggregatorModelMetadataList, nil
 }
 
-// GetAllAggregatorModelMetadataByAggregator queries the aggregator model metadata records from the ledger for all epochs
-func (s *MetadataService) GetAllAggregatorModelMetadataByAggregator(aggregatorId string) ([]shared.AggregatorModelMetadata, error) {
+// GetAllAggregatorModelMetadataByAggregator queries the aggregator model metadata records from the ledger for all epochs. Can be done by anyone.
+func (s *MetadataService) GetAllAggregatorModelMetadataByAggregator(aggregatorId int) ([]shared.AggregatorModelMetadata, error) {
+	aggregatorIdStr := strconv.Itoa(aggregatorId)
 	var aggregatorModelMetadataList []shared.AggregatorModelMetadata
 
-	err := s.client.EvaluateTransaction(&aggregatorModelMetadataList, "GetAllAggregatorModelMetadata", aggregatorId)
+	err := s.client.EvaluateTransaction(&aggregatorModelMetadataList, "GetAllAggregatorModelMetadata", aggregatorIdStr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query all aggregator model metadata records: %w", err)
+		return nil, fmt.Errorf("failed to query all aggregator model metadata records by aggregator id %d: %w", aggregatorId, err)
 	}
 	return aggregatorModelMetadataList, nil
 }
@@ -445,7 +472,7 @@ func (s *MetadataService) GetAllLogs() ([]shared.LogEntry, error) {
 	}
 
 	for i, log := range history {
-		var found, creatorInfo, err = s.client.GetTransactionCreator(context.Background(), log.TxID, 0)
+		var found, creatorInfo, err = s.client.GetTransactionCreator(context.Background(), log.TxId, 0)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get transaction creator: %w", err)
 		}
