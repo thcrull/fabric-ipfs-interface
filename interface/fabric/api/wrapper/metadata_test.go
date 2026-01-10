@@ -94,7 +94,9 @@ func TestGeneral(t *testing.T) {
 	t.Log("-----Participant Functionalities-----")
 
 	// User1 = Thomas
-	thomasId, err := testMetadataServiceUser1.AddParticipant(
+	thomasId := 1
+	err := testMetadataServiceUser1.AddParticipant(
+		thomasId,
 		"key-thomas",
 		"key-thomas-homomorphic-shared-key-cypher",
 		"key-thomas-participant-communication-key-cypher",
@@ -102,10 +104,12 @@ func TestGeneral(t *testing.T) {
 	if err != nil {
 		t.Fatalf("User1 failed to add participant Thomas: %v", err)
 	}
-	t.Logf("Added participant Thomas with id: %s", thomasId)
+	t.Logf("Added participant Thomas with id: %d", 1)
 
 	// User2 = Mihnea
-	mihneaId, err := testMetadataServiceUser2.AddParticipant(
+	mihneaId := 2
+	err = testMetadataServiceUser2.AddParticipant(
+		mihneaId,
 		"key-mihnea",
 		"key-mihnea-homomorphic-shared-key-cypher",
 		"key-mihnea-participant-communication-key-cypher",
@@ -113,10 +117,12 @@ func TestGeneral(t *testing.T) {
 	if err != nil {
 		t.Fatalf("User2 failed to add participant Mihnea: %v", err)
 	}
-	t.Logf("Added participant Mihnea with id: %s", mihneaId)
+	t.Logf("Added participant Mihnea with id: %d", 2)
 
 	// Admin = Ilinca
-	ilincaId, err := testMetadataServiceAdmin.AddParticipant(
+	ilincaId := 3
+	err = testMetadataServiceAdmin.AddParticipant(
+		ilincaId,
 		"key-ilinca",
 		"key-ilinca-homomorphic-shared-key-cypher",
 		"key-ilinca-participant-communication-key-cypher",
@@ -124,12 +130,12 @@ func TestGeneral(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Admin failed to add participant Ilinca: %v", err)
 	}
-	t.Logf("Added participant Ilinca with id: %s", ilincaId)
+	t.Logf("Added participant Ilinca with id: %d", 3)
 
 	t.Log("Participants added successfully.")
 
 	// Fetch participant Thomas
-	thomas, err := testMetadataServiceUser1.GetParticipant(thomasId)
+	thomas, err := testMetadataServiceUser1.GetParticipant(1)
 	if err != nil {
 		t.Fatalf("Failed to get participant Thomas: %v", err)
 	}
@@ -137,6 +143,7 @@ func TestGeneral(t *testing.T) {
 
 	// Update participant Thomas
 	err = testMetadataServiceUser1.UpdateParticipant(
+		1,
 		"key-thomas-updated",
 		"key-thomas-homomorphic-shared-key-cypher-updated",
 		"key-thomas-participant-communication-key-cypher-updated",
@@ -147,14 +154,14 @@ func TestGeneral(t *testing.T) {
 	t.Log("Updated participant Thomas successfully.")
 
 	// Delete participant Ilinca (admin)
-	err = testMetadataServiceAdmin.DeleteParticipant()
+	err = testMetadataServiceAdmin.DeleteParticipant(3)
 	if err != nil {
 		t.Fatalf("Failed to delete participant Ilinca: %v", err)
 	}
 	t.Log("Deleted participant Ilinca successfully.")
 
 	// Check participant Ilinca existence
-	exists, err := testMetadataServiceAdmin.ParticipantExists(ilincaId)
+	exists, err := testMetadataServiceAdmin.ParticipantExists(3)
 	if err != nil {
 		t.Fatalf("Failed to check participant Ilinca existence: %v", err)
 	}
@@ -173,18 +180,20 @@ func TestGeneral(t *testing.T) {
 	t.Log("-----Aggregator Functionalities-----")
 
 	// Admin = Aggregator
-	aggregatorId, err := testMetadataServiceAdmin.AddAggregator(map[string]string{
-		"thomas": "key-thomas-communication-key-cypher",
-		"mihnea": "key-mihnea-communication-key-cypher",
+	aggregatorId := 4
+	err = testMetadataServiceAdmin.AddAggregator(aggregatorId, map[int]string{
+		thomasId: "key-thomas-communication-key-cypher",
+		mihneaId: "key-mihnea-communication-key-cypher",
 	})
 	if err != nil {
 		t.Fatalf("Failed to add aggregator Aggregator: %v", err)
 	}
-	t.Logf("Added aggregator Aggregator with id: %s", aggregatorId)
+	t.Logf("Added aggregator Aggregator with id: %d", aggregatorId)
 
 	// User1 = BadAggregator
-	badAggregatorId, err := testMetadataServiceUser1.AddAggregator(map[string]string{
-		"ilinca": "key-ilinca-communication-key-cypher",
+	badAggregatorId := 5
+	err = testMetadataServiceUser1.AddAggregator(badAggregatorId, map[int]string{
+		ilincaId: "key-ilinca-communication-key-cypher",
 	})
 	if err != nil {
 		t.Fatalf("Failed to add aggregator BadAggregator: %v", err)
@@ -199,9 +208,9 @@ func TestGeneral(t *testing.T) {
 	t.Logf("Fetched aggregator Aggregator: %+v", aggregator)
 
 	// Update aggregator Aggregator
-	err = testMetadataServiceAdmin.UpdateAggregator(map[string]string{
-		"thomas": "key-thomas-communication-key-cypher-updated",
-		"mihnea": "key-mihnea-communication-key-cypher-updated",
+	err = testMetadataServiceAdmin.UpdateAggregator(aggregatorId, map[int]string{
+		thomasId: "key-thomas-communication-key-cypher-updated",
+		mihneaId: "key-mihnea-communication-key-cypher-updated",
 	})
 	if err != nil {
 		t.Fatalf("Failed to update aggregator Aggregator: %v", err)
@@ -209,7 +218,7 @@ func TestGeneral(t *testing.T) {
 	t.Log("Updated aggregator Aggregator successfully.")
 
 	// Delete aggregator BadAggregator
-	err = testMetadataServiceUser1.DeleteAggregator()
+	err = testMetadataServiceUser1.DeleteAggregator(badAggregatorId)
 	if err != nil {
 		t.Fatalf("Failed to delete aggregator BadAggregator: %v", err)
 	}
@@ -235,22 +244,22 @@ func TestGeneral(t *testing.T) {
 	t.Log("-----Participant Model Metadata Functionalities-----")
 
 	// Add participant model metadata
-	err = testMetadataServiceUser1.AddParticipantModelMetadata(10, "thomas-model-cid", "thomas-model-homomorphic-hash")
+	err = testMetadataServiceUser1.AddParticipantModelMetadata(thomasId, 10, "thomas-model-cid", "thomas-model-homomorphic-hash")
 	if err != nil {
 		t.Fatalf("Failed to add Thomas model metadata epoch 10: %v", err)
 	}
 
-	err = testMetadataServiceUser1.AddParticipantModelMetadata(20, "thomas-model-cid", "thomas-model-homomorphic-hash")
+	err = testMetadataServiceUser1.AddParticipantModelMetadata(thomasId, 20, "thomas-model-cid", "thomas-model-homomorphic-hash")
 	if err != nil {
 		t.Fatalf("Failed to add Thomas model metadata epoch 20: %v", err)
 	}
 
-	err = testMetadataServiceUser2.AddParticipantModelMetadata(10, "mihnea-model-cid", "mihnea-model-homomorphic-hash")
+	err = testMetadataServiceUser2.AddParticipantModelMetadata(mihneaId, 10, "mihnea-model-cid", "mihnea-model-homomorphic-hash")
 	if err != nil {
 		t.Fatalf("Failed to add Mihnea model metadata epoch 10: %v", err)
 	}
 
-	err = testMetadataServiceUser2.AddParticipantModelMetadata(20, "mihnea-model-cid", "mihnea-model-homomorphic-hash")
+	err = testMetadataServiceUser2.AddParticipantModelMetadata(mihneaId, 20, "mihnea-model-cid", "mihnea-model-homomorphic-hash")
 	if err != nil {
 		t.Fatalf("Failed to add Mihnea model metadata epoch 20: %v", err)
 	}
@@ -258,28 +267,28 @@ func TestGeneral(t *testing.T) {
 	t.Log("Added participant model metadata successfully.")
 
 	// Fetch participant model metadata
-	modelMeta, err := testMetadataServiceUser2.GetParticipantModelMetadata(10, mihneaId)
+	modelMeta, err := testMetadataServiceUser2.GetParticipantModelMetadata(mihneaId, 10)
 	if err != nil {
 		t.Fatalf("Failed to fetch Mihnea model metadata epoch 10: %v", err)
 	}
 	t.Logf("Fetched Mihnea model metadata: %+v", modelMeta)
 
 	// Update Mihnea model metadata
-	err = testMetadataServiceUser2.UpdateParticipantModelMetadata(10, "mihnea-model-cid-updated", "mihnea-model-homomorphic-hash-updated")
+	err = testMetadataServiceUser2.UpdateParticipantModelMetadata(mihneaId, 10, "mihnea-model-cid-updated", "mihnea-model-homomorphic-hash-updated")
 	if err != nil {
 		t.Fatalf("Failed to update Mihnea model metadata epoch 10: %v", err)
 	}
 	t.Log("Updated Mihnea model metadata successfully.")
 
 	// Delete Thomas model metadata epoch 20
-	err = testMetadataServiceUser1.DeleteParticipantModelMetadata(20)
+	err = testMetadataServiceUser1.DeleteParticipantModelMetadata(thomasId, 20)
 	if err != nil {
 		t.Fatalf("Failed to delete Thomas model metadata epoch 20: %v", err)
 	}
 	t.Log("Deleted Thomas model metadata epoch 20 successfully.")
 
 	// Check Thomas model metadata existence epoch 20
-	exists, err = testMetadataServiceUser1.ParticipantModelMetadataExists(20, thomasId)
+	exists, err = testMetadataServiceUser1.ParticipantModelMetadataExists(thomasId, 20)
 	if err != nil {
 		t.Fatalf("Failed to check Thomas model metadata existence epoch 20: %v", err)
 	}
@@ -305,12 +314,12 @@ func TestGeneral(t *testing.T) {
 	t.Log("-----Aggregator Model Metadata Functionalities-----")
 
 	// Add aggregator model metadata (Admin)
-	err = testMetadataServiceAdmin.AddAggregatorModelMetadata(10, "aggregator-model-cid", []string{thomasId, mihneaId})
+	err = testMetadataServiceAdmin.AddAggregatorModelMetadata(aggregatorId, 10, "aggregator-model-cid", []int{thomasId, mihneaId})
 	if err != nil {
 		t.Fatalf("Failed to add aggregator model metadata epoch 10: %v", err)
 	}
 
-	err = testMetadataServiceAdmin.AddAggregatorModelMetadata(20, "aggregator-model-cid", []string{mihneaId})
+	err = testMetadataServiceAdmin.AddAggregatorModelMetadata(aggregatorId, 20, "aggregator-model-cid", []int{mihneaId})
 	if err != nil {
 		t.Fatalf("Failed to add aggregator model metadata epoch 20: %v", err)
 	}
@@ -325,14 +334,14 @@ func TestGeneral(t *testing.T) {
 	t.Logf("Fetched aggregator model metadata epoch 10: %+v", aggMeta)
 
 	// Update aggregator model metadata epoch 10
-	err = testMetadataServiceAdmin.UpdateAggregatorModelMetadata(10, "aggregator-model-cid-updated", []string{thomasId, mihneaId})
+	err = testMetadataServiceAdmin.UpdateAggregatorModelMetadata(aggregatorId, 10, "aggregator-model-cid-updated", []int{thomasId, mihneaId})
 	if err != nil {
 		t.Fatalf("Failed to update aggregator model metadata epoch 10: %v", err)
 	}
 	t.Log("Updated aggregator model metadata successfully.")
 
 	// Delete aggregator model metadata epoch 20
-	err = testMetadataServiceAdmin.DeleteAggregatorModelMetadata(20)
+	err = testMetadataServiceAdmin.DeleteAggregatorModelMetadata(aggregatorId, 20)
 	if err != nil {
 		t.Fatalf("Failed to delete aggregator model metadata epoch 20: %v", err)
 	}

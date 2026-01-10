@@ -118,7 +118,7 @@ func (s *MetadataService) GetAllParticipants() ([]shared.Participant, error) {
 
 // AddAggregator submits a transaction to add a new aggregator record. The aggregator record will be bound to the caller's identity,
 // thus changes made to the record can only be done by the creator or an admin.
-func (s *MetadataService) AddAggregator(aggregatorId int, communicationKeysCyphers map[string]string) error {
+func (s *MetadataService) AddAggregator(aggregatorId int, communicationKeysCyphers map[int]string) error {
 	aggregatorIdStr := strconv.Itoa(aggregatorId)
 
 	var communicationKeysCyphersJSON, err = json.Marshal(communicationKeysCyphers)
@@ -173,7 +173,7 @@ func (s *MetadataService) DeleteAggregator(aggregatorId int) error {
 }
 
 // UpdateAggregator updates the caller's aggregator record. Can only be done by the aggregator's creator or an admin.
-func (s *MetadataService) UpdateAggregator(aggregatorId int, communicationKeysCyphers map[string]string) error {
+func (s *MetadataService) UpdateAggregator(aggregatorId int, communicationKeysCyphers map[int]string) error {
 	aggregatorIdStr := strconv.Itoa(aggregatorId)
 	var communicationKeysCyphersJSON, err = json.Marshal(communicationKeysCyphers)
 	if err != nil {
@@ -336,7 +336,7 @@ func (s *MetadataService) GetAllParticipantModelMetadataByEpoch(epoch int) ([]sh
 // AddAggregatorModelMetadata submits a transaction to add a new aggregator model metadata record.
 // Only the owner of the aggregator record or an admin can add a new metadata record for the aggregator's id.
 // The metadata record will be bound to the caller's identity, thus changes made to the record can only be done by the creator or an admin.
-func (s *MetadataService) AddAggregatorModelMetadata(aggregatorId int, epoch int, modelHashCid string, participantIds []string) error {
+func (s *MetadataService) AddAggregatorModelMetadata(aggregatorId int, epoch int, modelHashCid string, participantIds []int) error {
 	aggregatorIdStr := strconv.Itoa(aggregatorId)
 	epochStr := strconv.Itoa(epoch)
 	var participantIdsJSON, err = json.Marshal(participantIds)
@@ -393,7 +393,7 @@ func (s *MetadataService) DeleteAggregatorModelMetadata(aggregatorId int, epoch 
 }
 
 // UpdateAggregatorModelMetadata updates an existing aggregator model metadata record. Can be done only by the record's owner or an admin.
-func (s *MetadataService) UpdateAggregatorModelMetadata(aggregatorId int, epoch int, modelHashCid string, participantIds []string) error {
+func (s *MetadataService) UpdateAggregatorModelMetadata(aggregatorId int, epoch int, modelHashCid string, participantIds []int) error {
 	aggregatorIdStr := strconv.Itoa(aggregatorId)
 	epochStr := strconv.Itoa(epoch)
 	var participantIdsJSON, err = json.Marshal(participantIds)

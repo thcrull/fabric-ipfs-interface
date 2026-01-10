@@ -34,10 +34,10 @@ type Participant struct {
 // MSPID - the MSP id of the user who created the aggregator.
 // SerialNumber - the serial number of the user who created the aggregator.
 type Aggregator struct {
-	AggregatorId             int               `json:"aggregator_id"`
-	CommunicationKeysCyphers map[string]string `json:"comm_keys_cyphers"`
-	MSPID                    string            `json:"msp_id"`
-	SerialNumber             string            `json:"serial_number"`
+	AggregatorId             int            `json:"aggregator_id"`
+	CommunicationKeysCyphers map[int]string `json:"comm_keys_cyphers"`
+	MSPID                    string         `json:"msp_id"`
+	SerialNumber             string         `json:"serial_number"`
 }
 
 // ParticipantModelMetadata represents a participant's model update's metadata.

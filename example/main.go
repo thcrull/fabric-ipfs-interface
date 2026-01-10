@@ -54,7 +54,9 @@ func main() {
 	//---------------------------------------------
 	// 2. Add a participant to the Fabric network
 	//---------------------------------------------
-	participantID, err := metadataService.AddParticipant(
+	participantId := 10
+	err = metadataService.AddParticipant(
+		participantId,
 		"encapsulated-key",
 		"homomorphic-shared-key",
 		"participant-comm-key",
@@ -62,18 +64,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("error adding participant: %v", err)
 	}
-	log.Printf("Added participant %s successfully.", participantID)
+	log.Printf("Added participant %s successfully.", participantId)
 
 	//---------------------------------------------
 	// 3. Add an aggregator to the Fabric network
 	//---------------------------------------------
-	aggregatorID, err := metadataService.AddAggregator(map[string]string{
-		participantID: "participant-comm-key",
+	aggregatorId := 20
+	err = metadataService.AddAggregator(aggregatorId, map[int]string{
+		aggregatorId: "participant-comm-key",
 	})
 	if err != nil {
 		log.Fatalf("error adding aggregator: %v", err)
 	}
-	log.Printf("Added aggregator %s successfully.", aggregatorID)
+	log.Printf("Added aggregator %s successfully.", aggregatorId)
 
 	//-----------------------------------------------------
 	// 4. Read weight model from a file and add it to IPFS
@@ -94,7 +97,7 @@ func main() {
 	}
 	log.Printf("Pinned weight model to IPFS with CID: %s", cid)
 
-	err = metadataService.AddParticipantModelMetadata(1, cid, "homomorphic-hash-placeholder")
+	err = metadataService.AddParticipantModelMetadata(participantId, 1, cid, "homomorphic-hash-placeholder")
 	if err != nil {
 		log.Fatalf("failed to add participant model metadata: %v", err)
 	}
@@ -103,7 +106,7 @@ func main() {
 	//-------------------------------------------------
 	// 5. Fetch participant model metadata and model
 	//-------------------------------------------------
-	modelMeta, err := metadataService.GetParticipantModelMetadata(1, participantID)
+	modelMeta, err := metadataService.GetParticipantModelMetadata(participantId, 1)
 	if err != nil {
 		log.Fatalf("failed to fetch participant model metadata: %v", err)
 	}
@@ -125,7 +128,7 @@ func main() {
 	}
 	log.Printf("Pinned aggregated model to IPFS with CID: %s", cid)
 
-	err = metadataService.AddAggregatorModelMetadata(1, cid, []string{participantID})
+	err = metadataService.AddAggregatorModelMetadata(aggregatorId, 1, cid, []int{participantId})
 	if err != nil {
 		log.Fatalf("failed to add aggregator model metadata: %v", err)
 	}
@@ -143,7 +146,7 @@ func main() {
 	}
 	log.Printf("Unpinned participant model with CID: %s", modelMeta.ModelHashCid)
 
-	err = metadataService.DeleteParticipantModelMetadata(1)
+	err = metadataService.DeleteParticipantModelMetadata(participantId, 1)
 	if err != nil {
 		log.Fatalf("failed to delete participant model metadata: %v", err)
 	}
@@ -158,15 +161,15 @@ func main() {
 	//---------------------
 	// Optional: Teardown
 	//---------------------
-	if err = metadataService.DeleteParticipant(); err != nil {
+	if err = metadataService.DeleteParticipant(participantId); err != nil {
 		log.Fatalf("failed to delete participant: %v", err)
 	}
 
-	if err = metadataService.DeleteAggregatorModelMetadata(1); err != nil {
+	if err = metadataService.DeleteAggregatorModelMetadata(aggregatorId, 1); err != nil {
 		log.Fatalf("failed to delete aggregator model metadata: %v", err)
 	}
 
-	if err = metadataService.DeleteAggregator(); err != nil {
+	if err = metadataService.DeleteAggregator(aggregatorId); err != nil {
 		log.Fatalf("failed to delete aggregator: %v", err)
 	}
 
