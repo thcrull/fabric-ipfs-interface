@@ -683,7 +683,7 @@ func (s *MetadataSmartContract) AddAggregatorModelMetadata(
 	modelHashCid string,
 	participantIdsJSON string,
 ) error {
-	modelExists, err := s.AggregatorModelMetadataExists(ctx, epoch, aggregatorId)
+	modelExists, err := s.AggregatorModelMetadataExists(ctx, aggregatorId, epoch)
 	if err != nil {
 		return err
 	}
@@ -769,12 +769,12 @@ func (s *MetadataSmartContract) AggregatorModelMetadataExists(ctx contractapi.Tr
 
 // DeleteAggregatorModelMetadata deletes a given aggregator model metadata record from the world state. Can only be done by the owner of the aggregator or an admin.
 func (s *MetadataSmartContract) DeleteAggregatorModelMetadata(ctx contractapi.TransactionContextInterface, aggregatorId int, epoch int) error {
-	modelExists, err := s.AggregatorModelMetadataExists(ctx, epoch, aggregatorId)
+	modelExists, err := s.AggregatorModelMetadataExists(ctx, aggregatorId, epoch)
 	if err != nil {
 		return err
 	}
 	if !modelExists {
-		return fmt.Errorf("the aggregator model metadata record for epoch %d does not exist", epoch)
+		return fmt.Errorf("the aggregator model metadata record from aggregator %d for epoch %d does not exist", aggregatorId, epoch)
 	}
 
 	errAdminCheck := adminCheck(ctx)
@@ -799,12 +799,12 @@ func (s *MetadataSmartContract) UpdateAggregatorModelMetadata(
 	modelHashCid string,
 	participantIdsJSON string,
 ) error {
-	modelExists, err := s.AggregatorModelMetadataExists(ctx, epoch, aggregatorId)
+	modelExists, err := s.AggregatorModelMetadataExists(ctx, aggregatorId, epoch)
 	if err != nil {
 		return err
 	}
 	if !modelExists {
-		return fmt.Errorf("the aggregator model metadata record from %d for epoch %d does not exist", aggregatorId, epoch)
+		return fmt.Errorf("the aggregator model metadata record from aggregator %d for epoch %d does not exist", aggregatorId, epoch)
 	}
 
 	errAdminCheck := adminCheck(ctx)

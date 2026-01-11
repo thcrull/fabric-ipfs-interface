@@ -382,9 +382,10 @@ func (s *MetadataService) AggregatorModelMetadataExists(aggregatorId int, epoch 
 
 // DeleteAggregatorModelMetadata deletes an aggregator model metadata record, returns nil if successful. Can be done only by the record's owner or an admin.
 func (s *MetadataService) DeleteAggregatorModelMetadata(aggregatorId int, epoch int) error {
+	aggregatorIdStr := strconv.Itoa(aggregatorId)
 	epochStr := strconv.Itoa(epoch)
 
-	err := s.client.SubmitTransaction(nil, "DeleteAggregatorModelMetadata", epochStr)
+	err := s.client.SubmitTransaction(nil, "DeleteAggregatorModelMetadata", aggregatorIdStr, epochStr)
 	if err != nil {
 		return fmt.Errorf("failed to delete aggregator model metadata record for aggregator id %d and epoch %d: %w", aggregatorId, epoch, err)
 	}
