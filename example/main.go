@@ -65,7 +65,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("error adding participant: %v", err)
 	}
-	log.Printf("Added participant %s successfully.", participantId)
+	log.Printf("Added participant %d successfully.", participantId)
 
 	//---------------------------------------------
 	// 3. Add an aggregator to the Fabric network
@@ -77,7 +77,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("error adding aggregator: %v", err)
 	}
-	log.Printf("Added aggregator %s successfully.", aggregatorId)
+	log.Printf("Added aggregator %d successfully.", aggregatorId)
 
 	//-----------------------------------------------------
 	// 4. Read weight model from a file and add it to IPFS

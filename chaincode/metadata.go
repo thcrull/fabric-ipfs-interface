@@ -480,8 +480,8 @@ func (s *MetadataSmartContract) DeleteParticipantModelMetadata(ctx contractapi.T
 	if err != nil {
 		return err
 	}
-	if modelExists {
-		return fmt.Errorf("the participant model metadata record from participant %d for epoch %d already exists", participantId, epoch)
+	if !modelExists {
+		return fmt.Errorf("the participant model metadata record from participant %d for epoch %d does not exist", participantId, epoch)
 	}
 
 	errAdminCheck := adminCheck(ctx)
@@ -510,8 +510,8 @@ func (s *MetadataSmartContract) UpdateParticipantModelMetadata(
 	if err != nil {
 		return err
 	}
-	if modelExists {
-		return fmt.Errorf("the participant model metadata record from participant %d for epoch %d already exists", participantId, epoch)
+	if !modelExists {
+		return fmt.Errorf("the participant model metadata record from participant %d for epoch %d does not exist", participantId, epoch)
 	}
 
 	errAdminCheck := adminCheck(ctx)
@@ -769,11 +769,11 @@ func (s *MetadataSmartContract) AggregatorModelMetadataExists(ctx contractapi.Tr
 
 // DeleteAggregatorModelMetadata deletes a given aggregator model metadata record from the world state. Can only be done by the owner of the aggregator or an admin.
 func (s *MetadataSmartContract) DeleteAggregatorModelMetadata(ctx contractapi.TransactionContextInterface, aggregatorId int, epoch int) error {
-	exists, err := s.AggregatorModelMetadataExists(ctx, epoch, aggregatorId)
+	modelExists, err := s.AggregatorModelMetadataExists(ctx, epoch, aggregatorId)
 	if err != nil {
 		return err
 	}
-	if !exists {
+	if !modelExists {
 		return fmt.Errorf("the aggregator model metadata record for epoch %d does not exist", epoch)
 	}
 
@@ -799,11 +799,11 @@ func (s *MetadataSmartContract) UpdateAggregatorModelMetadata(
 	modelHashCid string,
 	participantIdsJSON string,
 ) error {
-	exists, err := s.AggregatorModelMetadataExists(ctx, epoch, aggregatorId)
+	modelExists, err := s.AggregatorModelMetadataExists(ctx, epoch, aggregatorId)
 	if err != nil {
 		return err
 	}
-	if !exists {
+	if !modelExists {
 		return fmt.Errorf("the aggregator model metadata record from %d for epoch %d does not exist", aggregatorId, epoch)
 	}
 
