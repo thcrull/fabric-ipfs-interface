@@ -122,7 +122,7 @@ func main() {
 	//--------------------------------------------------
 	// 6. Add an aggregated weight model (same vector)
 	//--------------------------------------------------
-	aggregatedModel := &pb.WeightModel{Values: vec} // same vector as participant
+	aggregatedModel := &pb.WeightModel{Values: vec}
 	cid, err = ipfsClient.AddAndPinFile(context.Background(), aggregatedModel)
 	if err != nil {
 		log.Fatalf("failed to add aggregated model to IPFS: %v", err)
@@ -135,8 +135,8 @@ func main() {
 	}
 	log.Printf("Added aggregator model metadata successfully.")
 
-	step4to6Elapsed := time.Since(step4Start) // end timer for Step 4→6
-	log.Printf("Elapsed time for Steps 4→6: %s", step4to6Elapsed)
+	step4to6Elapsed := time.Since(step4Start)
+	log.Printf("Elapsed time for reading, fetching and adding: %s", step4to6Elapsed)
 
 	//-------------------------------------------------------------
 	// 7. Clean up: unpin a participant model and delete metadata

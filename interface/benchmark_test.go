@@ -21,6 +21,8 @@ import (
 // -------------------------------
 
 var aux = 0
+var participantId = 10
+var aggregatorId = 20
 
 func readVec(path string) ([]float64, error) {
 	data, err := os.ReadFile(path)
@@ -81,7 +83,7 @@ func runEpoch(
 	*cids = append(*cids, cid)
 
 	// Add metadata
-	if err := meta.AddParticipantModelMetadata(aux, cid, "homomorphic-hash"); err != nil {
+	if err := meta.AddParticipantModelMetadata(participantId, aux, cid, "homomorphic-hash"); err != nil {
 		return err
 	}
 	aux++
@@ -112,12 +114,12 @@ func runBenchmark(b *testing.B, file string, epochs int) {
 		b.Fatalf("ipfs: %v", err)
 	}
 
-	participant, err := meta.AddParticipant("enc-key", "hom-shared", "comm-key")
+	err = meta.AddParticipant(participantId, "enc-key", "hom-shared", "comm-key")
 	if err != nil {
 		b.Fatalf("add participant: %v", err)
 	}
 
-	_, err = meta.AddAggregator(map[string]string{participant: "comm-key"})
+	err = meta.AddAggregator(aggregatorId, map[string]string{fmt.Sprintf("%d", participantId): "comm-key"})
 	if err != nil {
 		b.Fatalf("add aggregator: %v", err)
 	}
@@ -149,11 +151,11 @@ func runBenchmark(b *testing.B, file string, epochs int) {
 	// -------------------------------
 
 	// Delete all participant metadata
-	err = meta.DeleteAggregator()
+	err = meta.DeleteAggregator(aggregatorId)
 	if err != nil {
 		b.Fatalf("delete aggregator: %v", err)
 	}
-	err = meta.DeleteParticipant()
+	err = meta.DeleteParticipant(participantId)
 	if err != nil {
 		b.Fatalf("delete participant: %v", err)
 	}

@@ -105,7 +105,7 @@ func TestGeneral(t *testing.T) {
 	if err != nil {
 		t.Fatalf("User1 failed to add participant Thomas: %v", err)
 	}
-	t.Logf("Added participant Thomas with id: %d", 1)
+	t.Logf("Added participant Thomas with id: %d", thomasId)
 
 	// User2 = Mihnea
 	mihneaId := 2
@@ -118,7 +118,7 @@ func TestGeneral(t *testing.T) {
 	if err != nil {
 		t.Fatalf("User2 failed to add participant Mihnea: %v", err)
 	}
-	t.Logf("Added participant Mihnea with id: %d", 2)
+	t.Logf("Added participant Mihnea with id: %d", mihneaId)
 
 	// Admin = Ilinca
 	ilincaId := 3
@@ -131,12 +131,12 @@ func TestGeneral(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Admin failed to add participant Ilinca: %v", err)
 	}
-	t.Logf("Added participant Ilinca with id: %d", 3)
+	t.Logf("Added participant Ilinca with id: %d", ilincaId)
 
 	t.Log("Participants added successfully.")
 
 	// Fetch participant Thomas
-	thomas, err := testMetadataServiceUser1.GetParticipant(1)
+	thomas, err := testMetadataServiceUser1.GetParticipant(thomasId)
 	if err != nil {
 		t.Fatalf("Failed to get participant Thomas: %v", err)
 	}
@@ -155,14 +155,14 @@ func TestGeneral(t *testing.T) {
 	t.Log("Updated participant Thomas successfully.")
 
 	// Delete participant Ilinca (admin)
-	err = testMetadataServiceAdmin.DeleteParticipant(3)
+	err = testMetadataServiceAdmin.DeleteParticipant(ilincaId)
 	if err != nil {
 		t.Fatalf("Failed to delete participant Ilinca: %v", err)
 	}
 	t.Log("Deleted participant Ilinca successfully.")
 
 	// Check participant Ilinca existence
-	exists, err := testMetadataServiceAdmin.ParticipantExists(3)
+	exists, err := testMetadataServiceAdmin.ParticipantExists(ilincaId)
 	if err != nil {
 		t.Fatalf("Failed to check participant Ilinca existence: %v", err)
 	}
@@ -199,7 +199,7 @@ func TestGeneral(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to add aggregator BadAggregator: %v", err)
 	}
-	t.Logf("Added aggregator BadAggregator with id: %s", badAggregatorId)
+	t.Logf("Added aggregator BadAggregator with id: %d", badAggregatorId)
 
 	// Fetch aggregator Aggregator
 	aggregator, err := testMetadataServiceAdmin.GetAggregator(aggregatorId)
