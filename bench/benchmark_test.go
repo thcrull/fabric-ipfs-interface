@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,7 +12,7 @@ import (
 
 	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/wrapper"
 	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/wrapper"
-	pb "github.com/thcrull/fabric-ipfs-interface/weightpb"
+	pb "github.com/thcrull/fabric-ipfs-interface/weight_pb"
 )
 
 // -------------------------------
@@ -24,7 +23,7 @@ var aux = 0
 var participantId = 10
 var aggregatorId = 20
 
-func readVec(path string) ([]float64, error) {
+func readVec(path string) ([]int64, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -34,10 +33,10 @@ func readVec(path string) ([]float64, error) {
 	}
 
 	n := len(data) / 8
-	out := make([]float64, n)
+	out := make([]int64, n)
 	for i := range out {
-		bits := binary.LittleEndian.Uint64(data[i*8:])
-		out[i] = math.Float64frombits(bits)
+		bits := binary.LittleEndian.Uint64(data[i*8 : i*8+8])
+		out[i] = int64(bits)
 	}
 	return out, nil
 }
@@ -67,7 +66,7 @@ func runEpoch(
 	ctx context.Context,
 	meta *fabric_client.MetadataService,
 	ipfs *ipfs_client.IpfsClient,
-	vec []float64,
+	vec []int64,
 	cids *[]string,
 ) error {
 

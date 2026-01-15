@@ -5,18 +5,17 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
-	"math"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/wrapper"
 	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/wrapper"
-	pb "github.com/thcrull/fabric-ipfs-interface/weightpb"
+	pb "github.com/thcrull/fabric-ipfs-interface/weight_pb"
 )
 
-// readVectorFromFile reads float64 values from a binary file
-func readVectorFromFile(filename string) ([]float64, error) {
+// readVectorFromFile reads int64 values from a binary file
+func readVectorFromFile(filename string) ([]int64, error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -27,11 +26,11 @@ func readVectorFromFile(filename string) ([]float64, error) {
 	}
 
 	n := len(data) / 8
-	vec := make([]float64, n)
+	vec := make([]int64, n)
 
 	for i := 0; i < n; i++ {
 		bits := binary.LittleEndian.Uint64(data[i*8 : i*8+8])
-		vec[i] = math.Float64frombits(bits)
+		vec[i] = int64(bits)
 	}
 	return vec, nil
 }

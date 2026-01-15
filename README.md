@@ -23,45 +23,32 @@ for the Fabric network, and a wrapper around the IPFS (Kubo) RPC API.
   - **/generate_model**: Executable that generates the random models for the **/data** directory which are used by the tests
 ----------------------------------
 
-## Running the examples
+## Running the example and tests
 
-It is recommended to reset the fabric network before running an example.
-You can use the following command to reset it:
+### Prerequisites
 
+To make sure dependencies are in order:
 ```bash
-cd fabric-samples/test-network
-./network.sh down
+go mod tidy
 ```
 
-----------------------------------
-
-### To run the Fabric interface example
-All commands should be run from the root of this repository.
-
-If the fabric samples are not installed, run the following command:
+If the **fabric-samples** are not installed, run the following command:
 ```bash
 ./install-fabric.sh docker samples binary
 ```
 
-To start the fabric network and deploy the chaincode:
+You have to make sure the Fabric network is running:
 ```bash
 cd fabric-samples/test-network
+./network.sh down
 ./network.sh up createChannel
 ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go -ccl go
 ```
+**Note**: If you run into any Fabric-related errors like "... failed to endorse transaction ...", you can reuse this command to reset the ledger.
 
-To run the fabric example:
-```bash
-go mod tidy
-cd interface/fabric/example
-go run main.go
-```
 ----------------------------------
 
-### To run the IPFS interface example
-All commands should be run from the root of this repository.
-
-If the IPFS has not been instantiated, run the commands:
+If IPFS Kubo is not installed, run the commands:
 ```bash
 tar -xvzf kubo_v0.38.1_linux-amd64.tar.gz
 cd kubo
@@ -74,20 +61,21 @@ To start the IPFS daemon:
 ipfs daemon
 ```
 
-To run the example:
+----------------------------------
+
+### To run the example application
+
+To run the fabric example:
 ```bash
-cd interface/ipfs/example
+cd example
 go run main.go
 ```
 
 ----------------------------------
 
-### To run the example application
-All commands should be run from the root of this repository,
-and both the fabric and IPFS networks should be running (see above).
+### To run the benchmark test
 
 ```bash
-go mod tidy
-cd interface/example
-go run main.go
+cd bench
+go test ./bench -bench=. -benchmem
 ```

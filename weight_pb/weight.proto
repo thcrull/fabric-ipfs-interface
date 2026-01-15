@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package weight;
 
-option go_package = "./weigthpb";
+option go_package = "./weight_pb";
 
 message WeightModel {
-  repeated double values = 1;
+  repeated int64 values = 1;
 }
