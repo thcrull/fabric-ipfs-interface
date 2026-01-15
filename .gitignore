@@ -29,6 +29,7 @@ go.work.sum
 .env
 
 *.yaml
+*.bin
 
 # Editor/IDE
 .idea/
@@ -36,5 +37,3 @@ go.work.sum
 
 /fabric-samples
 /kubo
-/testing-utils
-/data

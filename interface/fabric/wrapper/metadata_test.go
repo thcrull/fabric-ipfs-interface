@@ -1,4 +1,4 @@
-package fabricclient
+package fabric_client
 
 import (
 	"os"

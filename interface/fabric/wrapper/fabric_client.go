@@ -1,4 +1,4 @@
-package fabricclient
+package fabric_client
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"fmt"
 
+	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/config"
 	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/utils"
 	"github.com/thcrull/fabric-ipfs-interface/shared"
 	"google.golang.org/grpc"
@@ -15,8 +16,6 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
-
-	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/config"
 )
 
 // FabricClient is a wrapper around the Fabric Gateway client. It provides
@@ -33,23 +32,23 @@ type FabricClient struct {
 // and prepares the network and contract for interaction.
 // Returns an error if any of these steps fail.
 func NewFabricClient(configPath string) (*FabricClient, error) {
-	cfg, err := fabricconfig.LoadConfig(configPath)
+	cfg, err := fabric_config.LoadConfig(configPath)
 	if err != nil {
 		return nil, err
 	}
 
-	conn, err := fabricutils.NewGrpcConnection(cfg)
+	conn, err := fabric_utils.NewGrpcConnection(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	id, err := fabricutils.NewIdentity(cfg)
+	id, err := fabric_utils.NewIdentity(cfg)
 	if err != nil {
 		conn.Close()
 		return nil, err
 	}
 
-	sign, err := fabricutils.NewSign(cfg)
+	sign, err := fabric_utils.NewSign(cfg)
 	if err != nil {
 		conn.Close()
 		return nil, err

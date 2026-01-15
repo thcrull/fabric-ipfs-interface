@@ -1,4 +1,4 @@
-package ipfsclient
+package ipfs_client
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"github.com/ipfs/boxo/files"
 	"github.com/ipfs/boxo/path"
 	"github.com/ipfs/kubo/client/rpc"
-	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/api/config"
+	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/config"
 )
 
 // IpfsClient is a wrapper around the IPFS node HTTP API. It provides
@@ -23,7 +23,7 @@ type IpfsClient struct {
 
 // NewIpfsClient creates a new IpfsClient instance.
 func NewIpfsClient(configPath string) (*IpfsClient, error) {
-	cfg, err := ipfsconfig.LoadConfig(configPath)
+	cfg, err := ipfs_config.LoadConfig(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("error loading IPFS config: %w", err)
 	}
@@ -58,7 +58,7 @@ func (c *IpfsClient) AddFile(ctx context.Context, msg proto.Message) (string, er
 	return cid.String(), nil
 }
 
-// GetFile retrieves a protobuf message from IPFS, unmarshels it and leaves the result in msg.
+// GetFile retrieves a protobuf message from IPFS, unmarshals it and leaves the result in msg.
 func (c *IpfsClient) GetFile(ctx context.Context, cid string, msg proto.Message) error {
 	ipfsPath, err := path.NewPath(cid)
 	if err != nil {

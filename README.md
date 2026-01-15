@@ -1,22 +1,26 @@
-# Fabric and IPFS Interface
+# Hyperledger Fabric and IPFS Interface
 
-A Go-based interface for integrating Hyperledger Fabric and IPFS into existing applications. 
-This repository is specifically designed for a research use case.
+This repository, created by **Thomas Crull**, is part of an Auditable Federated Learning research project
+lead by **Dr. Roland Kromes** at the **Research Engineering and Infrastructure Team TU Delft**.
+It contains a wrapper around the Hyperledger Fabric Gateway, a suite of smart contracts meant
+for the Fabric network, and a wrapper around the IPFS (Kubo) RPC API.
 
-This repository provides:
-- A **blockchain interface**: reusable utilities and abstractions to connect to a Fabric network and submit/evaluate transactions.
-- **Chaincode packages**: smart contracts specific to a research use case.
-- An **IPFS interface**: integration helpers to interact with IPFS for decentralised storage.
-
-The repository also provides extensive examples of how to use the blockchain interface and IPFS interface. 
-They walk you through all functions in the wrappers.
-There is also a general example application that showcases the basic functionalities we expect you to use (IPFS and Fabric).
-
-IMPORTANT: Make sure to copy the contents of the
-`/chaincode/metadata/chaincode.go` file into the file `/fabric-samples/asset-transfer-basic/chaincode-go/chaincode/smartcontract.go`
-before running the examples or your own application. This is how you override the template chaincode with the repository chaincode.
-
-
+### Repository structure and Features
+- **/chaincode**: Suite of smart contracts for the Fabric network relevant for Auditable Federated Learning
+- **/interface**: Wrappers around the Fabric and IPFS Gateway APIs
+  - **/fabric**
+    - **/config**: Config loader for the Fabric wrapper
+    - **/wrapper**: Hyperledger Fabric Gateway wrapper
+      - **fabric_client.go**: General use wrapper meant to ease the use of the Gateway
+      - **metadata.go**: Specialised wrapper built on top of the FabricClient which enables the use of the created chaincode 
+  - **/ipfs**
+    - **/config**: Config loader for the IPFS wrapper
+    - **/wrapper**: General use wrapper meant to ease the use of the IPFS RPC API
+- **/shared**: All types defined within the repository
+- **/example**: Basic example application using the Fabric and IPFS interfaces
+- **/config**: Directory with configuration files used by the examples and tests
+- **/testing_utils**: Utilities used by the tests
+  - **/generate_model**: Executable that generates the random models for the **/data** directory which are used by the tests
 ----------------------------------
 
 ## Running the examples

@@ -1,4 +1,4 @@
-package ipfsconfig
+package ipfs_config
 
 import (
 	"fmt"

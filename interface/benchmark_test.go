@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	fabricclient "github.com/thcrull/fabric-ipfs-interface/interface/fabric/api/wrapper"
-	ipfsclient "github.com/thcrull/fabric-ipfs-interface/interface/ipfs/api/wrapper"
+	"github.com/thcrull/fabric-ipfs-interface/interface/fabric/wrapper"
+	"github.com/thcrull/fabric-ipfs-interface/interface/ipfs/wrapper"
 	pb "github.com/thcrull/fabric-ipfs-interface/weightpb"
 )
 
@@ -65,8 +65,8 @@ func listDataFiles(dir string) ([]string, error) {
 
 func runEpoch(
 	ctx context.Context,
-	meta *fabricclient.MetadataService,
-	ipfs *ipfsclient.IpfsClient,
+	meta *fabric_client.MetadataService,
+	ipfs *ipfs_client.IpfsClient,
 	vec []float64,
 	cids *[]string,
 ) error {
@@ -103,13 +103,13 @@ func runBenchmark(b *testing.B, file string, epochs int) {
 	// -------------------------------
 	// Setup Fabric & IPFS
 	// -------------------------------
-	meta, err := fabricclient.NewMetadataService("../config/admin.yaml")
+	meta, err := fabric_client.NewMetadataService("../config/admin.yaml")
 	if err != nil {
 		b.Fatalf("metadata: %v", err)
 	}
 	defer meta.Close()
 
-	ipfs, err := ipfsclient.NewIpfsClient("../config/admin.yaml")
+	ipfs, err := ipfs_client.NewIpfsClient("../config/admin.yaml")
 	if err != nil {
 		b.Fatalf("ipfs: %v", err)
 	}

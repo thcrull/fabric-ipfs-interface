@@ -1,4 +1,4 @@
-package fabricconfig
+package fabric_config
 
 import (
 	"fmt"
