@@ -6,21 +6,26 @@ It contains a wrapper around the Hyperledger Fabric Gateway, a suite of smart co
 for the Fabric network, and a wrapper around the IPFS (Kubo) RPC API.
 
 ### Repository structure and Features
-- **/chaincode**: Suite of smart contracts for the Fabric network relevant for Auditable Federated Learning
-- **/interface**: Wrappers around the Fabric and IPFS Gateway APIs
-  - **/fabric**
-    - **/config**: Config loader for the Fabric wrapper
-    - **/wrapper**: Hyperledger Fabric Gateway wrapper
-      - **fabric_client.go**: General use wrapper meant to ease the use of the Gateway
-      - **metadata.go**: Specialised wrapper built on top of the FabricClient which enables the use of the created chaincode 
-  - **/ipfs**
-    - **/config**: Config loader for the IPFS wrapper
-    - **/wrapper**: General use wrapper meant to ease the use of the IPFS RPC API
-- **/shared**: All types defined within the repository
-- **/example**: Basic example application using the Fabric and IPFS interfaces
-- **/config**: Directory with configuration files used by the examples and tests
-- **/testing_utils**: Utilities used by the tests
-  - **/generate_model**: Executable that generates the random models for the **/data** directory which are used by the tests
+```text
+fabric-ipfs-interface/
+├── chaincode/                    # Smart contracts for the Fabric network meant for Auditable FL
+├── interface/                    # Wrappers around Fabric and IPFS Gateway APIs
+│   ├── fabric/
+│   │   ├── config/               # Config loader for the Fabric wrapper
+│   │   └── wrapper/              # Hyperledger Fabric Gateway wrapper
+│   │       ├── fabric_client.go  # General-use Gateway wrapper
+│   │       └── metadata.go       # FabricClient wrapper which eases the use of the created chaincode
+│   └── ipfs/
+│       ├── config/               # Config loader for the IPFS wrapper
+│       └── wrapper/              # IPFS RPC API wrapper
+├── shared/                       # Shared type definitions
+├── weight_pb/                    # Protobuf definition for the models
+├── example/                      # Example app using Fabric and IPFS interfaces
+├── config/                       # Configuration files for examples and tests
+├── testing_utils/                # Test utilities
+│   └── generate_model/           # Generates random models in data/ for tests and examples
+└── data/                         # Random models used by tests and examples
+```
 ----------------------------------
 
 ## Running the example and tests
@@ -37,6 +42,13 @@ If the **fabric-samples** are not installed, run the following command:
 ./install-fabric.sh docker samples binary
 ```
 
+Make sure the fabric-samples basic chaincode uses our chaincode instead of the standard:
+```text
+1. Go to fabric-samples/asset-transfer-basic/chaincode-go/asset_transfer.go
+2. Change the line "assetChaincode, err := contractapi.NewChaincode(&chaincode.SmartContract{})" to "assetChaincode, err := contractapi.NewChaincode(&chaincode.MetadataSmartContract{})"
+3. Make sure the chaincode.MetadataSmartContract from step 2 is imported from this repository
+```
+
 You have to make sure the Fabric network is running:
 ```bash
 cd fabric-samples/test-network
@@ -46,7 +58,6 @@ cd fabric-samples/test-network
 ```
 **Note**: If you run into any Fabric-related errors like "... failed to endorse transaction ...", you can reuse this command to reset the ledger.
 
-----------------------------------
 
 If IPFS Kubo is not installed, run the commands:
 ```bash
