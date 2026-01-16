@@ -32,24 +32,24 @@ fabric-ipfs-interface/
 
 ### Prerequisites
 
-To make sure dependencies are in order:
+#### Make sure dependencies are in order:
 ```bash
 go mod tidy
 ```
 
-If the **fabric-samples** are not installed, run the following command:
+#### If the **fabric-samples** are not installed, run the following command:
 ```bash
 ./install-fabric.sh docker samples binary
 ```
 
-Make sure the fabric-samples basic chaincode uses our chaincode instead of the standard:
+#### Make sure the fabric-samples basic chaincode uses our chaincode instead of the standard:
 ```text
 1. Go to fabric-samples/asset-transfer-basic/chaincode-go/asset_transfer.go
 2. Change the line "assetChaincode, err := contractapi.NewChaincode(&chaincode.SmartContract{})" to "assetChaincode, err := contractapi.NewChaincode(&chaincode.MetadataSmartContract{})"
 3. Make sure the chaincode.MetadataSmartContract from step 2 is imported from this repository
 ```
 
-You have to make sure the Fabric network is running:
+#### Make sure the Fabric network is running:
 ```bash
 cd fabric-samples/test-network
 ./network.sh down
@@ -58,8 +58,63 @@ cd fabric-samples/test-network
 ```
 **Note**: If you run into any Fabric-related errors like "... failed to endorse transaction ...", you can reuse this command to reset the ledger.
 
+#### If the config files have not been added, create the following in **config/**:
 
-If IPFS Kubo is not installed, run the commands:
+*admin.yaml*:
+```text
+identity:
+  cert_path: "/path/to/fabric-ipfs-interface/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
+  key_path: "/path/to/fabric-ipfs-interface/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
+  msp_id: "Org1MSP"
+
+network:
+  peer_endpoint: "localhost:7051"
+  tls_cert_path: "/path/to/fabric-ipfs-interface/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
+  tls_hostname: "peer0.org1.example.com"
+  channel_name: "mychannel"
+  chaincode_name: "basic"
+
+ipfs:
+  node_path: "http://localhost:5001"
+```
+
+*user1.yaml*:
+```text
+identity:
+  cert_path: "/path/to/fabric-ipfs-interface/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem"
+  key_path: "/path/to/fabric-ipfs-interface/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/priv_sk"
+  msp_id: "Org1MSP"
+
+network:
+  peer_endpoint: "localhost:7051"
+  tls_cert_path: "/path/to/fabric-ipfs-interface/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
+  tls_hostname: "peer0.org1.example.com"
+  channel_name: "mychannel"
+  chaincode_name: "basic"
+
+ipfs:
+  node_path: "http://localhost:5001"
+```
+
+*user2.yaml*:
+```text
+identity:
+  cert_path: "/path/to/fabric-ipfs-interface/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/User1@org2.example.com/msp/signcerts/User1@org2.example.com-cert.pem"
+  key_path: "/path/to/fabric-ipfs-interface/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/User1@org2.example.com/msp/keystore/priv_sk"
+  msp_id: "Org2MSP"
+
+network:
+  peer_endpoint: "localhost:9051"
+  tls_cert_path: "/path/to/fabric-ipfs-interface/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt"
+  tls_hostname: "peer0.org2.example.com"
+  channel_name: "mychannel"
+  chaincode_name: "basic"
+
+ipfs:
+  node_path: "http://localhost:5001"
+```
+
+#### If IPFS Kubo is not installed, run the commands:
 ```bash
 tar -xvzf kubo_v0.38.1_linux-amd64.tar.gz
 cd kubo
@@ -67,7 +122,7 @@ sudo bash install.sh
 ipfs init
 ```
 
-To start the IPFS daemon:
+#### To start the IPFS daemon:
 ```bash
 ipfs daemon
 ```
