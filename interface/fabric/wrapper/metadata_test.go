@@ -28,18 +28,18 @@ func setup() {
 	var err error
 
 	// Create the metadata service clients with the Client role
-	testMetadataServiceUser1, err = NewMetadataService("../../../../config/user1.yaml")
+	testMetadataServiceUser1, err = NewMetadataService("../../../config/user1.yaml")
 	if err != nil {
 		panic("failed to create metadata service: " + err.Error())
 	}
 
-	testMetadataServiceUser2, err = NewMetadataService("../../../../config/user2.yaml")
+	testMetadataServiceUser2, err = NewMetadataService("../../../config/user2.yaml")
 	if err != nil {
 		panic("failed to create metadata service: " + err.Error())
 	}
 
 	// Create the metadata service client with the Admin role
-	testMetadataServiceAdmin, err = NewMetadataService("../../../../config/admin.yaml")
+	testMetadataServiceAdmin, err = NewMetadataService("../../../config/admin.yaml")
 	if err != nil {
 		panic("failed to create metadata service: " + err.Error())
 	}

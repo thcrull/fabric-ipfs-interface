@@ -12,12 +12,6 @@ import (
 )
 
 func main() {
-	n, err := strconv.ParseUint(os.Args[1], 10, 64)
-	if err != nil {
-		fmt.Println("Error parsing number of values:", err)
-		return
-	}
-
 	rand.Seed(uint64(time.Now().UnixNano()))
 
 	// Ensure /data directory exists
@@ -27,23 +21,25 @@ func main() {
 		return
 	}
 
-	filePath := filepath.Join(dataDir, "data_"+strconv.FormatUint(n, 10)+".bin")
-	file, err := os.Create(filePath)
-	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return
-	}
-	defer file.Close()
-
-	buf := make([]byte, 8)
-
-	for i := uint64(0); i < n; i++ {
-		v := rand.Int63()
-		binary.LittleEndian.PutUint64(buf, uint64(v))
-		_, err := file.Write(buf)
+	for n := uint64(100); n <= 100000000; n = n * 10 {
+		filePath := filepath.Join(dataDir, "data_"+strconv.FormatUint(n, 10)+".bin")
+		file, err := os.Create(filePath)
 		if err != nil {
-			fmt.Println("Error writing to file:", err)
+			fmt.Println("Error creating file:", err)
 			return
+		}
+		defer file.Close()
+
+		buf := make([]byte, 8)
+
+		for i := uint64(0); i < n; i++ {
+			v := rand.Int63()
+			binary.LittleEndian.PutUint64(buf, uint64(v))
+			_, err := file.Write(buf)
+			if err != nil {
+				fmt.Println("Error writing to file:", err)
+				return
+			}
 		}
 	}
 }

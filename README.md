@@ -127,6 +127,12 @@ ipfs init
 ipfs daemon
 ```
 
+#### If the weight models in data/ are not present:
+```bash
+cd testing_utils/generate_model
+go run main.go
+```
+
 ----------------------------------
 
 ### To run the example application
