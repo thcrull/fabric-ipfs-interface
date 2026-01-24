@@ -507,6 +507,34 @@ func (s *MetadataService) GetAllLogsForUser(MSPID string, SerialNumber string) (
 	return history, nil
 }
 
+// ----------------------------------------------------------------------
+// THIS SECTION DEALS WITH CLEANING THE LEDGER AND CLOSING THE SERVICE
+// ----------------------------------------------------------------------
+
+func (s *MetadataService) CleanLedger() error {
+	err := s.client.SubmitTransaction(nil, "DeleteAllParticipantsModelMetadata")
+	if err != nil {
+		return fmt.Errorf("failed to delete all participants model metadata records: %w", err)
+	}
+
+	err = s.client.SubmitTransaction(nil, "DeleteAllAggregatorModelMetadata")
+	if err != nil {
+		return fmt.Errorf("failed to delete all aggregators model metadata records: %w", err)
+	}
+
+	err = s.client.SubmitTransaction(nil, "DeleteAllParticipants")
+	if err != nil {
+		return fmt.Errorf("failed to delete all participants records: %w", err)
+	}
+
+	err = s.client.SubmitTransaction(nil, "DeleteAllAggregators")
+	if err != nil {
+		return fmt.Errorf("failed to delete all aggregators records: %w", err)
+	}
+
+	return nil
+}
+
 // Close closes the Fabric client
 func (s *MetadataService) Close() error {
 	return s.client.Close()
