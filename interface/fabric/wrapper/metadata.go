@@ -511,8 +511,9 @@ func (s *MetadataService) GetAllLogsForUser(MSPID string, SerialNumber string) (
 // THIS SECTION DEALS WITH CLEANING THE LEDGER AND CLOSING THE SERVICE
 // ----------------------------------------------------------------------
 
+// CleanLedger deletes all records from the ledger. Only the admin can use this function.
 func (s *MetadataService) CleanLedger() error {
-	err := s.client.SubmitTransaction(nil, "DeleteAllParticipantsModelMetadata")
+	err := s.client.SubmitTransaction(nil, "DeleteAllParticipantModelMetadata")
 	if err != nil {
 		return fmt.Errorf("failed to delete all participants model metadata records: %w", err)
 	}
