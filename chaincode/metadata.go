@@ -652,26 +652,27 @@ func (s *MetadataSmartContract) GetAllParticipantModelMetadataByEpoch(ctx contra
 // aggregationCheck checks if all participants have submitted their model metadata records for the epoch that the aggregator is responsible for.
 func (s *MetadataSmartContract) aggregationCheck(ctx contractapi.TransactionContextInterface, aggregatorModelMetadata *shared.AggregatorModelMetadata) error {
 	// TODO: Maybe we should skip this check for epoch 1 since it might be the starting model?
-	var missing []int
-	for _, participantId := range aggregatorModelMetadata.ParticipantIds {
-		key, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata",
-			[]string{fmt.Sprintf("%d", participantId), fmt.Sprintf("%d", aggregatorModelMetadata.Epoch)})
-		if err != nil {
-			return err
-		}
-
-		state, err := ctx.GetStub().GetState(key)
-		if err != nil {
-			return err
-		}
-		if state == nil {
-			missing = append(missing, participantId)
-		}
-	}
-
-	if len(missing) > 0 {
-		return fmt.Errorf("aggregation denied, missing model metadata from: %v", missing)
-	}
+	// TODO: This has been disabled for now.
+	//var missing []int
+	//for _, participantId := range aggregatorModelMetadata.ParticipantIds {
+	//	key, err := ctx.GetStub().CreateCompositeKey("participant_model_metadata",
+	//		[]string{fmt.Sprintf("%d", participantId), fmt.Sprintf("%d", aggregatorModelMetadata.Epoch)})
+	//	if err != nil {
+	//		return err
+	//	}
+	//
+	//	state, err := ctx.GetStub().GetState(key)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	if state == nil {
+	//		missing = append(missing, participantId)
+	//	}
+	//}
+	//
+	//if len(missing) > 0 {
+	//	return fmt.Errorf("aggregation denied, missing model metadata from: %v", missing)
+	//}
 	return nil
 }
 
