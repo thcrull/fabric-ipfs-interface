@@ -58,6 +58,18 @@ func (c *IpfsClient) AddFile(ctx context.Context, msg proto.Message) (string, er
 	return cid.String(), nil
 }
 
+// AddFileBytes adds a byte array to IPFS and returns its CID.
+func (c *IpfsClient) AddFileBytes(ctx context.Context, byteArray []byte) (string, error) {
+	file := files.NewReaderFile(bytes.NewReader(byteArray))
+
+	cid, err := c.NodeHttpApi.Unixfs().Add(ctx, file)
+	if err != nil {
+		return "", fmt.Errorf("failed to add file to IPFS: %w", err)
+	}
+
+	return cid.String(), nil
+}
+
 // GetFile retrieves a protobuf message from IPFS, unmarshals it and leaves the result in msg.
 func (c *IpfsClient) GetFile(ctx context.Context, cid string, msg proto.Message) error {
 	ipfsPath, err := path.NewPath(cid)
@@ -123,6 +135,21 @@ func (c *IpfsClient) UnpinFile(ctx context.Context, cid string) error {
 // AddAndPinFile adds a protobuf message to IPFS and pins it.
 func (c *IpfsClient) AddAndPinFile(ctx context.Context, msg proto.Message) (string, error) {
 	cid, err := c.AddFile(ctx, msg)
+	if err != nil {
+		return "", fmt.Errorf("failed to add file to IPFS: %w", err)
+	}
+
+	err = c.PinFile(ctx, cid)
+	if err != nil {
+		return "", fmt.Errorf("failed to pin CID: %w", err)
+	}
+
+	return cid, nil
+}
+
+// AddAndPinFileBytes adds a byte array to the IPFS and pins it.
+func (c *IpfsClient) AddAndPinFileBytes(ctx context.Context, byteArray []byte) (string, error) {
+	cid, err := c.AddFileBytes(ctx, byteArray)
 	if err != nil {
 		return "", fmt.Errorf("failed to add file to IPFS: %w", err)
 	}
